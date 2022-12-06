@@ -156,7 +156,7 @@ module.exports = configure(function (ctx) {
       server: {
         type: 'http'
       },
-      port: 9700,
+      port: 9800,
       open: false, // opens browser window automatically
       // @mimas: allow cors for dev servers
       headers: {
