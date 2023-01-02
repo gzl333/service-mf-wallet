@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// import { ref, computed } from "vue"
+// import { ref, computed, PropType } from "vue"
 // import { navigateToUrl } from 'single-spa'
 // import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
@@ -7,27 +7,27 @@
 
 // const props = defineProps({
 //   foo: {
-//     type: String,
+//     type: String as PropType<'bar'>,
 //     required: false,
 //     default: ''
 //   }
 // })
 // const emits = defineEmits(['change', 'delete'])
 
+// const { tc } = i18n.global
 // const store = useStore()
 // const route = useRoute()
 // const router = useRouter()
-// const tc = i18n.global.tc
 
 </script>
 
 <template>
-  <div class="Service1Page">
-    this is Service1Page
+  <div class="ManageIndex">
+    this is ManageIndex
   </div>
 </template>
 
 <style lang="scss" scoped>
-.Service1Page {
+.ManageIndex {
 }
 </style>

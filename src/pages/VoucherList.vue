@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// import { ref, computed } from "vue"
+// import { ref, computed, PropType } from "vue"
 // import { navigateToUrl } from 'single-spa'
 // import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
@@ -7,27 +7,27 @@
 
 // const props = defineProps({
 //   foo: {
-//     type: String,
+//     type: String as PropType<'bar'>,
 //     required: false,
 //     default: ''
 //   }
 // })
 // const emits = defineEmits(['change', 'delete'])
 
+// const { tc } = i18n.global
 // const store = useStore()
 // const route = useRoute()
 // const router = useRouter()
-// const tc = i18n.global.tc
 
 </script>
 
 <template>
-  <div class="Service2Page">
-    this is Service2Page
+  <div class="VoucherList">
+    this is VoucherList
   </div>
 </template>
 
 <style lang="scss" scoped>
-.Service2Page {
+.VoucherList {
 }
 </style>

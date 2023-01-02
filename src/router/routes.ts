@@ -4,15 +4,23 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/my/wallet',
     component: () => import('layouts/WalletLayout.vue'),
-    redirect: '/my/wallet/service1',
+    redirect: '/my/wallet/account',
     children: [
       {
-        path: 'service1',
-        component: () => import('pages/Service1Page.vue')
+        path: 'account',
+        component: () => import('pages/AccountList.vue')
       },
       {
-        path: 'service2',
-        component: () => import('pages/Service2Page.vue')
+        path: 'voucher',
+        component: () => import('pages/VoucherList.vue')
+      },
+      {
+        path: 'payment',
+        component: () => import('pages/PaymentRecord.vue')
+      },
+      {
+        path: 'manage',
+        component: () => import('pages/ManageIndex.vue')
       }
     ]
   },

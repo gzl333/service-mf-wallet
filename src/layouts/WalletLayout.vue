@@ -19,6 +19,11 @@ const store = useStore()
 // const route = useRoute()
 const tc = i18n.global.tc
 
+// the root layout of @cnic/wallet, load @cnic/wallet's store here
+console.log('@cnic/wallet store:', store.$state)
+// void store.loadAllItems()
+void store.loadTotalTables()
+
 const activeItem = computed(() => store.items.currentPath[0])
 
 const releaseTime = process.env.releaseTime
@@ -43,25 +48,49 @@ const releaseTime = process.env.releaseTime
 
             <q-item
               clickable
-              :active="activeItem === 'service1'"
-              @click="navigateToUrl('/my/wallet/service1')"
+              :active="activeItem === 'account'"
+              @click="navigateToUrl('/my/wallet/account')"
               active-class="active-item"
             >
               <q-item-section class="column items-center">
-                <q-icon name="las la-video" size="lg"/>
-                <div class="active-text text-center">{{ tc('服务1') }}</div>
+                <q-icon name="account_circle" size="lg"/>
+                <div class="active-text text-center">{{ tc('我的账户') }}</div>
               </q-item-section>
             </q-item>
 
             <q-item
               clickable
-              :active="activeItem === 'service2'"
-              @click="navigateToUrl('/my/wallet/service2')"
+              :active="activeItem === 'voucher'"
+              @click="navigateToUrl('/my/wallet/voucher')"
               active-class="active-item"
             >
               <q-item-section class="column items-center">
-                <q-icon name="las la-server" size="lg"/>
-                <div class="active-text text-center">{{ tc('服务2') }}</div>
+                <q-icon name="request_quote" size="lg"/>
+                <div class="active-text text-center">{{ tc('代金券') }}</div>
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              :active="activeItem === 'payment'"
+              @click="navigateToUrl('/my/wallet/payment')"
+              active-class="active-item"
+            >
+              <q-item-section class="column items-center">
+                <q-icon name="receipt_long" size="lg"/>
+                <div class="active-text text-center">{{ tc('支付记录') }}</div>
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              :active="activeItem === 'manage'"
+              @click="navigateToUrl('/my/wallet/manage')"
+              active-class="active-item"
+            >
+              <q-item-section class="column items-center">
+                <q-icon name="manage_accounts" size="lg"/>
+                <div class="active-text text-center">{{ tc('管理员') }}</div>
               </q-item-section>
             </q-item>
 
@@ -84,7 +113,7 @@ const releaseTime = process.env.releaseTime
 
     <q-page-container>
       <q-scroll-area style="height: 100vh;">
-        <router-view/>
+        <router-view :key="$route.fullPath"/>
       </q-scroll-area>
     </q-page-container>
 
