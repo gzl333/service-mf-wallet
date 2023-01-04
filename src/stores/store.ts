@@ -10,6 +10,32 @@ import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 const { tc } = i18n.global
 const exceptionNotifier = useExceptionNotifier()
 
+export interface VoucherInterface {
+  id: string
+  face_value: string
+  creation_time: string
+  effective_time: string
+  expiration_time: string
+  balance: string
+  status: 'wait' | 'available' | 'canceled' | 'deleted'
+  granted_time: string
+  owner_type: string // more specified?
+  app_service: {
+    id: string
+    name: string
+    name_en: string
+    category: string // more specified?
+    service_id: string | null
+  },
+  user: {
+    id: string
+    username: string
+  },
+  vo: Record<string, unknown>
+  activity: Record<string, unknown>
+  exchange_code: string
+}
+
 export interface AccountInterface {
   id: string
   name: string

@@ -20,7 +20,14 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'manage',
-        component: () => import('pages/ManageIndex.vue')
+        component: () => import('pages/manage/ManageIndex.vue'),
+        redirect: '/my/wallet/manage/voucher',
+        children: [
+          {
+            path: 'voucher',
+            component: () => import('pages/manage/VoucherList.vue')
+          }
+        ]
       }
     ]
   },
