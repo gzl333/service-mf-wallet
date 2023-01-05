@@ -30,6 +30,10 @@ const isLoading = ref(false)
 
 const rows = ref<VoucherInterface[]>()
 
+// 筛选服务单元
+const serviceOptions = computed(() => store.getServiceOptionsByRole(store.items.fedRole === 'federal-admin'))
+const serviceSelection = ref('all')
+
 // 根据当前搜索条件，更新rows，并更新count值
 const loadAdminServers = async () => {
   // table loading
@@ -276,7 +280,7 @@ const clearRowSelection = () => {
                     outlined
                     dense
                     stack-label
-                    :label="tc('筛选云主机计费方式')"
+                    :label="tc('筛选代金券状态')"
                     v-model="paymentSelection"
                     :options="paymentOptions"
                     emit-value
@@ -292,144 +296,6 @@ const clearRowSelection = () => {
             <!--          </template>-->
           </q-select>
 
-          <q-select class="col-auto"
-                    style="min-width: 170px;"
-                    :label-color="networkSelection !== 'all' ? 'primary' : ''"
-                    outlined
-                    dense
-                    stack-label
-                    :label="tc('筛选网络类型')"
-                    v-model="networkSelection"
-                    :options="networkOptions"
-                    emit-value
-                    map-options
-                    option-value="value"
-                    option-label="label"
-          >
-            <!--当前选项的内容插槽-->
-            <!--          <template v-slot:selected-item="scope">-->
-            <!--                <span :class="networkSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
-            <!--                  {{ scope.opt.label }}-->
-            <!--                </span>-->
-            <!--          </template>-->
-          </q-select>
-
-          <q-input
-            style="width: 250px;"
-            :label-color="ipInput ? 'primary' : ''"
-            v-model.trim="ipInput"
-            outlined
-            dense
-            :label="tc('筛选IP地址关键字')"
-            @keyup.enter="resetPageSelection();loadAdminServers();clearRowSelection()"
-          >
-            <template v-slot:append v-if="ipInput">
-              <q-icon name="close" @click="ipInput = ''" class="cursor-pointer"/>
-            </template>
-
-          </q-input>
-
-          <q-input
-            style="width: 250px;"
-            :label-color="remarkInput ? 'primary' : ''"
-            v-model.trim="remarkInput"
-            outlined
-            dense
-            :label="tc('筛选云主机备注关键字')"
-            @keyup.enter="resetPageSelection();loadAdminServers();clearRowSelection()"
-          >
-            <template v-slot:append v-if="remarkInput">
-              <q-icon name="close" @click="remarkInput = ''" class="cursor-pointer"/>
-            </template>
-
-          </q-input>
-        </div>
-
-      </div>
-
-      <div class="col row full-width items-center justify-between">
-
-        <div class="col row q-gutter-x-md">
-
-          <div class="col-auto row items-center no-wrap">
-            <q-select class="col-auto"
-                      style="min-width: 170px;"
-                      outlined
-                      dense
-                      stack-label
-                      :label="tc('筛选项目组')"
-                      :label-color="((groupSelection === 'exclude-vo') || (groupSelection !== 'all' && groupSelection !== 'exclude-vo' && groupInput)) ? 'primary' : ''"
-                      v-model="groupSelection"
-                      :options="groupOptions"
-                      emit-value
-                      map-options
-                      option-value="value"
-                      option-label="label"
-            >
-              <!--当前选项的内容插槽-->
-              <!--            <template v-slot:selected-item="scope">-->
-              <!--                <span :class="groupSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
-              <!--                  {{ scope.opt.label }}-->
-              <!--                </span>-->
-              <!--            </template>-->
-            </q-select>
-
-            <q-input
-              style="width: 250px;"
-              v-if="groupSelection !== 'all' && groupSelection !== 'exclude-vo'"
-              :label-color="groupInput ? 'primary' : ''"
-              v-model.trim="groupInput"
-              outlined
-              dense
-              :label="groupSelection==='vo-name' ? tc('项目组名关键字') : groupSelection==='vo-id' ? tc('准确的项目组ID') : ''"
-              @keyup.enter="resetPageSelection();loadAdminServers();clearRowSelection()"
-            >
-              <template v-slot:append v-if="groupInput">
-                <q-icon name="close" @click="groupInput = ''" class="cursor-pointer"/>
-              </template>
-            </q-input>
-
-          </div>
-
-          <div class="col-auto row items-center no-wrap">
-            <q-select class="col-auto"
-                      style="min-width: 170px;"
-                      outlined
-                      dense
-                      stack-label
-                      :label="tc('筛选创建者')"
-                      :label-color="creatorInput ? 'primary' : ''"
-                      v-model="creatorSelection"
-                      :options="creatorOptions"
-                      emit-value
-                      map-options
-                      option-value="value"
-                      option-label="label"
-            >
-              <!--当前选项的内容插槽-->
-              <!--            <template v-slot:selected-item="scope">-->
-              <!--                <span :class="creatorSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
-              <!--                  {{ scope.opt.label }}-->
-              <!--                </span>-->
-              <!--            </template>-->
-            </q-select>
-
-            <q-input
-              style="width: 250px;"
-              v-if="creatorSelection !== 'all'"
-              :label-color="creatorInput ? 'primary' : ''"
-              v-model.trim="creatorInput"
-              outlined
-              dense
-              :label="creatorSelection==='username' ? tc('用户名关键字') : creatorSelection==='user-id' ? tc('准确的用户ID') : ''"
-              @keyup.enter="resetPageSelection();loadAdminServers();clearRowSelection()"
-            >
-              <template v-slot:append v-if="creatorInput">
-                <q-icon name="close" @click="creatorInput = ''" class="cursor-pointer"/>
-              </template>
-            </q-input>
-          </div>
-
         </div>
 
         <div class="col-auto q-gutter-x-sm">
@@ -442,6 +308,7 @@ const clearRowSelection = () => {
             搜索
           </q-btn>
         </div>
+
       </div>
 
     </div>

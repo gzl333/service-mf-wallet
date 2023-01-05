@@ -5,7 +5,7 @@ import { useStore, AccountInterface } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
 
-const props = defineProps({
+/* const props =  */defineProps({
   accounts: {
     type: Array as PropType<AccountInterface[]>,
     required: true

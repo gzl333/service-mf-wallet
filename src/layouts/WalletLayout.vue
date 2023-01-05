@@ -21,7 +21,7 @@ const tc = i18n.global.tc
 
 // the root layout of @cnic/wallet, load @cnic/wallet's store here
 console.log('@cnic/wallet store:', store.$state)
-// void store.loadAllItems()
+void store.loadAllItems()
 void store.loadTotalTables()
 
 const activeItem = computed(() => store.items.currentPath[0])
