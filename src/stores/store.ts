@@ -38,14 +38,14 @@ export interface VoucherInterface {
   status: 'wait' | 'available' | 'canceled' | 'deleted'
   granted_time: string
   owner_type: string // more specified?
-  app_service: {
+  app_service?: {
     id: string
     name: string
     name_en: string
     category: string // more specified?
     service_id: string | null
   },
-  user: {
+  user?: {
     id: string
     username: string
   },

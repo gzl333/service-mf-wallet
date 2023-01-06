@@ -4,6 +4,7 @@ import { ref, computed, onMounted/* , PropType */ } from 'vue'
 import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
+import api from 'src/api'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 
@@ -34,39 +35,66 @@ const rows = ref<VoucherInterface[]>()
 const serviceOptions = computed(() => store.getServiceOptionsByRole(store.items.fedRole === 'federal-admin'))
 const serviceSelection = ref('all')
 
+// 筛选代金券状态
+const statusOptions = computed(() => [
+  {
+    value: 'all',
+    label: `${tc('全部状态')}`
+  },
+  {
+    value: 'wait',
+    label: `${tc('待兑换')}`
+  },
+  {
+    value: 'available',
+    label: `${tc('可用')}`
+  },
+  {
+    value: 'cancelled',
+    label: `${tc('不可用')}`
+  },
+  {
+    value: 'deleted',
+    label: `${tc('已删除')}`
+  }
+])
+const statusSelection = ref<'all' | 'wait' | 'available' | 'cancelled' | 'deleted'>('all')
+
 // 根据当前搜索条件，更新rows，并更新count值
-const loadAdminServers = async () => {
+const loadRows = async () => {
   // table loading
   isLoading.value = true
   // request
   try {
-    // const respGetAdminServer = await api.server.server.getServer({
-    //   query: {
-    //     'as-admin': 'true',
-    //     page: pagination.value.page,
-    //     page_size: pagination.value.rowsPerPage,
-    //     ...(serviceSelection.value !== 'all' && { service_id: serviceSelection.value }),
-    //     ...(paymentSelection.value !== 'all' && { status: paymentSelection.value }),
-    //     ...(networkSelection.value !== 'all' && { public: networkSelection.value }),
-    //     ...(ipInput.value !== '' && { 'ip-contain': ipInput.value }),
-    //     ...(remarkInput.value !== '' && { remark: remarkInput.value }),
-    //     ...(creatorSelection.value === 'user-id' && creatorInput.value !== '' && { 'user-id': creatorInput.value }),
-    //     ...(creatorSelection.value === 'username' && creatorInput.value !== '' && { username: creatorInput.value }),
-    //     ...(groupSelection.value === 'exclude-vo' && { 'exclude-vo': 'true' }),
-    //     ...(groupSelection.value === 'vo-id' && groupInput.value !== '' && { 'vo-id': groupInput.value }),
-    //     ...(groupSelection.value === 'vo-name' && groupInput.value !== '' && { 'vo-name': groupInput.value })
-    //   }
-    // })
-    // // 拿到rows值，给table用
-    // rows.value = respGetAdminServer.data.servers
-    // // pagination count
-    // pagination.value.count = respGetAdminServer.data.count
+    console.log(serviceSelection.value, statusSelection.value)
+    console.log(pagination.value)
+    console.log(serviceSelection)
+
+    const respGetAdminVoucher = await api.wallet.admin.getAdminCashcoupon({
+      query: {
+        page: pagination.value.page,
+        page_size: pagination.value.rowsPerPage,
+        ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id }), // id -> pay_app_service_id
+        ...(statusSelection.value !== 'all' && { status: statusSelection.value })
+      }
+    })
+    // 拿到rows值，给table用
+    rows.value = respGetAdminVoucher.data.results
+    // pagination count
+    pagination.value.count = respGetAdminVoucher.data.count
   } catch (exception) {
     exceptionNotifier(exception)
   }
   // table stop loading
   isLoading.value = false
 }
+
+// 被pagination组件使用
+const pagination = ref({
+  page: 1, // 当前页码
+  rowsPerPage: 10, // 每页条数
+  count: 0 // 总共条数
+})
 
 // 复位分页
 const resetPageSelection = () => {
@@ -75,22 +103,24 @@ const resetPageSelection = () => {
 
 // 重置所有搜索条件
 const resetFilters = () => {
-  // serviceSelection.value = 'all'
-  // paymentSelection.value = 'all'
-  // networkSelection.value = 'all'
-  // ipInput.value = ''
-  // remarkInput.value = ''
-  // creatorSelection.value = 'all'
-  // creatorInput.value = ''
-  // groupSelection.value = 'all'
-  // groupInput.value = ''
+  serviceSelection.value = 'all'
+  statusSelection.value = 'all'
 }
 
 // onMounted时加载初始table第一页
-onMounted(loadAdminServers)
+onMounted(loadRows)
 
 // 分栏定义
 const columns = computed(() => [
+  {
+    name: 'status',
+    label: (() => tc('状态'))(),
+    field: 'status',
+    align: 'center',
+    classes: 'ellipsis',
+    style: 'padding: 15px 0px',
+    headerStyle: 'padding: 0 2px'
+  },
   {
     name: 'id',
     label: (() => tc('代金券ID'))(),
@@ -110,9 +140,9 @@ const columns = computed(() => [
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'voucherType',
-    label: (() => tc('代金券类型'))(),
-    field: 'voucherType',
+    name: 'resourceType',
+    label: (() => tc('资源种类'))(),
+    field: 'resourceType',
     align: 'center',
     classes: 'ellipsis',
     headerStyle: 'padding: 0 0 0 1px',
@@ -137,9 +167,9 @@ const columns = computed(() => [
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'validDuration',
-    label: (() => tc('有效期'))(),
-    field: 'validDuration',
+    name: 'expirationTime',
+    label: (() => tc('失效期'))(),
+    field: 'expirationTime',
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px; max-width: 150px; word-break: break-all; word-wrap: break-word; white-space: normal;',
@@ -164,15 +194,6 @@ const columns = computed(() => [
     style: 'padding: 15px 0px; max-width: 100px; word-break: break-all; word-wrap: break-word; white-space: normal;'
   },
   {
-    name: 'status',
-    label: (() => tc('状态'))(),
-    field: 'status',
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px',
-    headerStyle: 'padding: 0 2px'
-  },
-  {
     name: 'creator',
     label: (() => tc('创建者'))(),
     field: 'creator',
@@ -180,15 +201,15 @@ const columns = computed(() => [
     style: 'padding: 15px 0px; width: 100px', // 固定宽度防止更新状态时抖动
     headerStyle: 'padding: 0 2px'
   },
-  {
-    name: 'creation',
-    label: (() => tc('创建时间'))(),
-    field: 'creation',
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px',
-    headerStyle: 'padding: 0 2px'
-  },
+  // {
+  //   name: 'creation',
+  //   label: (() => tc('创建时间'))(),
+  //   field: 'creation',
+  //   align: 'center',
+  //   classes: 'ellipsis',
+  //   style: 'padding: 15px 0px',
+  //   headerStyle: 'padding: 0 2px'
+  // },
   {
     name: 'operation',
     label: (() => tc('操作'))(),
@@ -198,13 +219,6 @@ const columns = computed(() => [
     style: 'padding: 15px 0px;width: 150px;',
     headerStyle: 'padding: 0 2px'
   }])
-
-// 被pagination组件使用
-const pagination = ref({
-  page: 1, // 当前页码
-  rowsPerPage: 10, // 每页条数
-  count: 0 // 总共条数
-})
 
 // row selection
 const rowSelection = ref<VoucherInterface[]>([])
@@ -220,9 +234,20 @@ const clearRowSelection = () => {
 
       <div class="col row full-width items-center justify-start q-pb-sm">
 
+        <div class="col-auto q-gutter-x-sm q-pr-md">
+          <q-btn unelevated no-caps color="primary"
+                 @click="resetPageSelection();loadRows();clearRowSelection()">
+            搜索
+          </q-btn>
+          <q-btn flat no-caps dense color="primary"
+                 @click="resetFilters();resetPageSelection();loadRows();clearRowSelection()">
+            重置
+          </q-btn>
+        </div>
+
         <div class="col row q-gutter-x-md">
           <q-select class="col-auto"
-                    style="min-width: 170px; max-width: 250px;"
+                    style="min-width: 170px; max-width: 300px;"
                     :label-color="serviceSelection !== 'all' ? 'primary' : ''"
                     outlined
                     dense
@@ -276,13 +301,13 @@ const clearRowSelection = () => {
 
           <q-select class="col-auto"
                     style="min-width: 170px;"
-                    :label-color="paymentSelection !== 'all' ? 'primary' : ''"
+                    :label-color="statusSelection !== 'all' ? 'primary' : ''"
                     outlined
                     dense
                     stack-label
                     :label="tc('筛选代金券状态')"
-                    v-model="paymentSelection"
-                    :options="paymentOptions"
+                    v-model="statusSelection"
+                    :options="statusOptions"
                     emit-value
                     map-options
                     option-value="value"
@@ -299,13 +324,8 @@ const clearRowSelection = () => {
         </div>
 
         <div class="col-auto q-gutter-x-sm">
-          <q-btn flat no-caps dense color="primary"
-                 @click="resetFilters();resetPageSelection();loadAdminServers();clearRowSelection()">
-            重置
-          </q-btn>
-          <q-btn unelevated no-caps color="primary"
-                 @click="resetPageSelection();loadAdminServers();clearRowSelection()">
-            搜索
+          <q-btn unelevated no-caps color="primary">
+            创建代金券
           </q-btn>
         </div>
 
@@ -360,66 +380,120 @@ const clearRowSelection = () => {
             <q-checkbox v-model="props.selected" dense size="xs"/>
           </q-td>
 
+          <q-td key="status" :props="props">
+            <q-chip v-if="props.row.status === 'wait'"
+                    style="width: 80px;"
+                    color="primary"
+                    text-color="white"
+                    icon="more_horiz">
+              <div class="row justify-center">
+                {{ tc('待兑换') }}
+              </div>
+            </q-chip>
+
+            <q-chip v-if="props.row.status === 'available'"
+                    style="width: 80px;"
+                    color="light-green"
+                    text-color="white"
+                    icon="done">
+              <div class="row justify-center">
+                {{ tc('可用') }}
+              </div>
+            </q-chip>
+
+            <q-chip v-if="props.row.status === 'cancelled'"
+                    style="width: 80px;"
+                    color="red"
+                    text-color="white"
+                    icon="close">
+              <div class="row justify-center">
+                {{ tc('不可用') }}
+              </div>
+            </q-chip>
+
+            <q-chip v-if="props.row.status === 'deleted'"
+                    style="width: 80px;"
+                    color="grey"
+                    text-color="white"
+                    icon="delete_forever">
+              <div class="row justify-center">
+                {{ tc('已删除') }}
+              </div>
+            </q-chip>
+          </q-td>
+
           <q-td key="id" :props="props">
-            <!--            {{ props.row.ipv4 }}-->
+            {{ props.row.id }}
           </q-td>
 
           <q-td key="serviceNode" :props="props">
-
+            {{ i18n.global.locale === 'zh' ? props.row.app_service?.name : props.row.app_service?.name_en }}
           </q-td>
 
-          <q-td key="voucherType" :props="props">
-
+          <q-td key="resourceType" :props="props">
+            {{ props.row.app_service?.category }}
           </q-td>
 
           <q-td key="redeemer" :props="props">
-
+            {{ props.row.user?.username || tc('未知') }}
           </q-td>
 
           <q-td key="redeemTime" :props="props">
+            <div v-if="i18n.global.locale==='zh'">
+              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+            </div>
 
+            <div v-else>
+              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+            </div>
           </q-td>
 
-          <q-td key="validDuration" :props="props">
-            <!--            {{ props.row.user.username }}-->
+          <q-td key="expirationTime" :props="props">
+            <div v-if="i18n.global.locale==='zh'">
+              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+            </div>
+
+            <div v-else>
+              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+            </div>
           </q-td>
 
           <q-td key="denomination" :props="props">
-            <!--            {{ props.row.pay_type }}-->
+            {{ props.row.face_value }} {{ tc('点', Number(props.row.face_value)) }}
           </q-td>
 
           <q-td key="balance" :props="props">
-            {{ props.row.remarks }}
-          </q-td>
-
-          <q-td key="status" :props="props">
-            status
+            {{ props.row.balance }} {{ tc('点', Number(props.row.balance)) }}
           </q-td>
 
           <q-td key="creator" :props="props">
-            creator
+            API暂未提供
           </q-td>
 
-          <q-td key="creation" :props="props">
-            <!--            <div v-if="i18n.global.locale==='zh'">-->
-            <!--              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>-->
-            <!--              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>-->
-            <!--            </div>-->
+          <!--          <q-td key="creation" :props="props">-->
+          <!--            &lt;!&ndash;            <div v-if="i18n.global.locale==='zh'">&ndash;&gt;-->
+          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>&ndash;&gt;-->
+          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>&ndash;&gt;-->
+          <!--            &lt;!&ndash;            </div>&ndash;&gt;-->
 
-            <!--            <div v-else>-->
-            <!--              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>-->
-            <!--              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>-->
-            <!--            </div>-->
-          </q-td>
+          <!--            &lt;!&ndash;            <div v-else>&ndash;&gt;-->
+          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>&ndash;&gt;-->
+          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>&ndash;&gt;-->
+          <!--            &lt;!&ndash;            </div>&ndash;&gt;-->
+          <!--          </q-td>-->
 
           <q-td key="operation" :props="props">
-            <q-btn flat dense no-caps color="primary" @click="deleteServer(props.row)">
+            <q-btn flat dense no-caps color="primary">
               删除
             </q-btn>
 
-            <q-btn flat dense no-caps color="primary" @click="stopServer(props.row)">
-              关机
-            </q-btn>
+            <!--            <q-btn flat dense no-caps color="primary" @click="stopServer(props.row)">-->
+            <!--              关机-->
+            <!--            </q-btn>-->
           </q-td>
 
         </q-tr>
@@ -434,7 +508,7 @@ const clearRowSelection = () => {
                       dense
                       options-dense
                       borderless
-                      @update:model-value="resetPageSelection();loadAdminServers();clearRowSelection()">
+                      @update:model-value="resetPageSelection();loadRows();clearRowSelection()">
               <!--当前选项的内容插槽-->
               <!--                      <template v-slot:selected-item>-->
               <!--                            <span class="text-grey">-->
@@ -451,7 +525,7 @@ const clearRowSelection = () => {
                         direction-links
                         outline
                         :ripple="false"
-                        @update:model-value="loadAdminServers();clearRowSelection()"
+                        @update:model-value="loadRows();clearRowSelection()"
           />
         </div>
       </template>
