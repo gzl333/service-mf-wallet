@@ -26,6 +26,9 @@ export interface ServerServiceInterface {
   longitude: number
   latitude: number
   pay_app_service_id: string
+
+  // 自己补充的字段
+  pay_app_service_type: 'server'
 }
 
 export interface StorageServiceInterface {
@@ -47,6 +50,9 @@ export interface StorageServiceInterface {
     name: string
     name_en: string
   }
+
+  // 自己补充的字段
+  pay_app_service_type: 'storage'
 }
 
 export type ServiceInterface = ServerServiceInterface | StorageServiceInterface
@@ -237,6 +243,7 @@ export const useStore = defineStore('wallet', {
         // cloud server services
         const respGetServerService = await api.wallet.service.getService()
         for (const data of respGetServerService.data.results) {
+          Object.assign(data, { pay_app_service_type: 'server' })
           Object.assign(this.tables.serviceTable.byId, { [data.id]: data })
           this.tables.serviceTable.allIds.unshift(data.id)
           this.tables.serviceTable.allIds = [...new Set(this.tables.serviceTable.allIds)]
@@ -245,6 +252,7 @@ export const useStore = defineStore('wallet', {
         // object storage services
         const respGetStorageService = await api.wallet.storage.getStorageService()
         for (const data of respGetStorageService.data.results) {
+          Object.assign(data, { pay_app_service_type: 'storage' })
           Object.assign(this.tables.serviceTable.byId, { [data.id]: data })
           this.tables.serviceTable.allIds.unshift(data.id)
           this.tables.serviceTable.allIds = [...new Set(this.tables.serviceTable.allIds)]

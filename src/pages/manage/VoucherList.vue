@@ -280,15 +280,32 @@ const clearRowSelection = () => {
                 </q-tooltip>
                 <q-item-section thumbnail>
                   <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'"
-                          color="light-green" name="play_arrow"/>
-                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'" color="red"
+                          color="light-green"
+                          name="play_arrow"/>
+                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'"
+                          color="red"
                           name="pause"/>
                   <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'"
-                          color="black" name="clear"/>
+                          color="black"
+                          name="clear"/>
                   <q-icon v-else color="primary" name="done_all"/>
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label>{{ i18n.global.locale === 'zh' ? scope.opt.label : scope.opt.labelEn }}</q-item-label>
+                  <q-item-label class="row items-center">
+                    <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.pay_app_service_type === 'server'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="computer"/>
+                    <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.pay_app_service_type === 'storage'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-database"/>
+                    <div class="col-auto">
+                      {{ i18n.global.locale === 'zh' ? scope.opt.label : scope.opt.labelEn }}
+                    </div>
+                  </q-item-label>
                 </q-item-section>
               </q-item>
             </template>
