@@ -68,6 +68,21 @@ export default {
       return axiosWallet.get('/service/admin', config)
     }
   },
+  storage: {
+    getStorageService (payload?: {
+      query?: {
+        page?: number
+        page_size?: number
+        center_id?: string
+        status?: 'enable' | 'disable' | 'deleted'
+      }
+    }) {
+      const config = {
+        params: payload?.query
+      }
+      return axiosWallet.get('/storage/service', config)
+    }
+  },
   user: {
     getUserPermissionPolicy (payload?: {
       query?: {

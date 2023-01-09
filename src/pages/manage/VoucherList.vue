@@ -47,11 +47,11 @@ const statusOptions = computed(() => [
   },
   {
     value: 'available',
-    label: `${tc('可用')}`
+    label: `${tc('在用')}`
   },
   {
     value: 'cancelled',
-    label: `${tc('不可用')}`
+    label: `${tc('失效')}`
   },
   {
     value: 'deleted',
@@ -66,10 +66,6 @@ const loadRows = async () => {
   isLoading.value = true
   // request
   try {
-    console.log(serviceSelection.value, statusSelection.value)
-    console.log(pagination.value)
-    console.log(serviceSelection)
-
     const respGetAdminVoucher = await api.wallet.admin.getAdminCashcoupon({
       query: {
         page: pagination.value.page,
@@ -397,7 +393,7 @@ const clearRowSelection = () => {
                     text-color="white"
                     icon="done">
               <div class="row justify-center">
-                {{ tc('可用') }}
+                {{ tc('在用') }}
               </div>
             </q-chip>
 
@@ -407,7 +403,7 @@ const clearRowSelection = () => {
                     text-color="white"
                     icon="close">
               <div class="row justify-center">
-                {{ tc('不可用') }}
+                {{ tc('失效') }}
               </div>
             </q-chip>
 

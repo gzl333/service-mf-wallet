@@ -9,7 +9,7 @@ import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 // const { tc } = i18n.global
 const exceptionNotifier = useExceptionNotifier()
 
-export interface ServiceInterface {
+export interface ServerServiceInterface {
   id: string
   name: string
   name_en: string
@@ -27,6 +27,29 @@ export interface ServiceInterface {
   latitude: number
   pay_app_service_id: string
 }
+
+export interface StorageServiceInterface {
+  id: string
+  name: string
+  name_en: string
+  service_type: string
+  endpoint_url: string
+  add_time: string
+  status: 'enable' | 'disable' | 'deleted'
+  remarks: string
+  provide_ftp: boolean
+  ftp_domains: string[]
+  longitude: number
+  latitude: number
+  pay_app_service_id: string
+  data_center: {
+    id: string
+    name: string
+    name_en: string
+  }
+}
+
+export type ServiceInterface = ServerServiceInterface | StorageServiceInterface
 
 export interface VoucherInterface {
   id: string
@@ -211,12 +234,22 @@ export const useStore = defineStore('wallet', {
       }
       this.tables.serviceTable.status = 'loading'
       try {
-        const respGetService = await api.wallet.service.getService()
-        for (const data of respGetService.data.results) {
+        // cloud server services
+        const respGetServerService = await api.wallet.service.getService()
+        for (const data of respGetServerService.data.results) {
           Object.assign(this.tables.serviceTable.byId, { [data.id]: data })
           this.tables.serviceTable.allIds.unshift(data.id)
           this.tables.serviceTable.allIds = [...new Set(this.tables.serviceTable.allIds)]
         }
+
+        // object storage services
+        const respGetStorageService = await api.wallet.storage.getStorageService()
+        for (const data of respGetStorageService.data.results) {
+          Object.assign(this.tables.serviceTable.byId, { [data.id]: data })
+          this.tables.serviceTable.allIds.unshift(data.id)
+          this.tables.serviceTable.allIds = [...new Set(this.tables.serviceTable.allIds)]
+        }
+
         this.tables.serviceTable.status = 'total'
       } catch (exception) {
         exceptionNotifier(exception)
