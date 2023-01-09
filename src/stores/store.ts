@@ -3,6 +3,9 @@ import { defineStore } from 'pinia'
 import api from 'src/api'
 // @ts-expect-error
 import { useStoreMain } from '@cnic/main'
+import { Dialog } from 'quasar'
+
+import CreateVoucherDialog from 'components/manage/CreateVoucherDialog.vue'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 
@@ -201,7 +204,16 @@ export const useStore = defineStore('wallet', {
         labelEn: 'All Service Units'
       })
       return services
-    }
+    },
+    getAllServices: state => state.tables.serviceTable.allIds
+      .map(serviceId => {
+        const currentService = state.tables.serviceTable.byId[serviceId]
+        return {
+          value: currentService?.id,
+          label: currentService?.name,
+          labelEn: currentService?.name_en
+        }
+      })
   },
   actions: {
     /* items */
@@ -240,19 +252,19 @@ export const useStore = defineStore('wallet', {
       }
       this.tables.serviceTable.status = 'loading'
       try {
-        // cloud server services
-        const respGetServerService = await api.wallet.service.getService()
-        for (const data of respGetServerService.data.results) {
-          Object.assign(data, { pay_app_service_type: 'server' })
+        // object storage services
+        const respGetStorageService = await api.wallet.storage.getStorageService()
+        for (const data of respGetStorageService.data.results) {
+          Object.assign(data, { pay_app_service_type: 'storage' })
           Object.assign(this.tables.serviceTable.byId, { [data.id]: data })
           this.tables.serviceTable.allIds.unshift(data.id)
           this.tables.serviceTable.allIds = [...new Set(this.tables.serviceTable.allIds)]
         }
 
-        // object storage services
-        const respGetStorageService = await api.wallet.storage.getStorageService()
-        for (const data of respGetStorageService.data.results) {
-          Object.assign(data, { pay_app_service_type: 'storage' })
+        // cloud server services
+        const respGetServerService = await api.wallet.service.getService()
+        for (const data of respGetServerService.data.results) {
+          Object.assign(data, { pay_app_service_type: 'server' })
           Object.assign(this.tables.serviceTable.byId, { [data.id]: data })
           this.tables.serviceTable.allIds.unshift(data.id)
           this.tables.serviceTable.allIds = [...new Set(this.tables.serviceTable.allIds)]
@@ -347,7 +359,15 @@ export const useStore = defineStore('wallet', {
         exceptionNotifier(exception)
         this.tables.accountTable.status = 'error'
       }
-    }
+    },
     /* tables */
+
+    /* dialog */
+    triggerCreateVoucherDialog () {
+      Dialog.create({
+        component: CreateVoucherDialog
+      })
+    }
+    /* dialog */
   }
 })

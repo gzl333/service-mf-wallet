@@ -197,22 +197,22 @@ const columns = computed(() => [
     style: 'padding: 15px 0px; width: 100px', // 固定宽度防止更新状态时抖动
     headerStyle: 'padding: 0 2px'
   },
-  // {
-  //   name: 'creation',
-  //   label: (() => tc('创建时间'))(),
-  //   field: 'creation',
-  //   align: 'center',
-  //   classes: 'ellipsis',
-  //   style: 'padding: 15px 0px',
-  //   headerStyle: 'padding: 0 2px'
-  // },
+  {
+    name: 'code',
+    label: (() => tc('兑换码'))(),
+    field: 'code',
+    align: 'center',
+    classes: 'ellipsis',
+    style: 'padding: 15px 0px',
+    headerStyle: 'padding: 0 2px'
+  },
   {
     name: 'operation',
     label: (() => tc('操作'))(),
     field: 'operation',
     align: 'center',
     classes: 'ellipsis',
-    style: 'padding: 15px 0px;width: 150px;',
+    style: 'padding: 15px 0px;width: 100px;',
     headerStyle: 'padding: 0 2px'
   }])
 
@@ -337,7 +337,7 @@ const clearRowSelection = () => {
         </div>
 
         <div class="col-auto q-gutter-x-sm">
-          <q-btn unelevated no-caps color="primary">
+          <q-btn unelevated no-caps color="primary" @click="store.triggerCreateVoucherDialog()">
             创建代金券
           </q-btn>
         </div>
@@ -487,6 +487,10 @@ const clearRowSelection = () => {
             API暂未提供
           </q-td>
 
+          <q-td key="code" :props="props">
+            {{ props.row.exchange_code }}
+          </q-td>
+
           <!--          <q-td key="creation" :props="props">-->
           <!--            &lt;!&ndash;            <div v-if="i18n.global.locale==='zh'">&ndash;&gt;-->
           <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>&ndash;&gt;-->
@@ -543,6 +547,7 @@ const clearRowSelection = () => {
         </div>
       </template>
     </q-table>
+
   </div>
 </template>
 
