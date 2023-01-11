@@ -4,7 +4,7 @@ import { ref, computed, PropType } from 'vue'
 import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
-import { Notify, useDialogPluginComponent } from 'quasar'
+import { Notify, useDialogPluginComponent, date } from 'quasar'
 
 // const props = defineProps({
 //   foo: {
@@ -33,6 +33,12 @@ const serviceOptions = computed(() => store.getAllServices)
 const serviceSelection = ref('1')
 
 const denomination = ref(0)
+
+// 代金券的时间
+const dateStartSelect = ref(date.formatDate(new Date(), 'YYYY-MM-DD'))
+const timeStartSelect = ref(date.formatDate(new Date(), 'HH:mm'))
+const dateEndSelect = ref(date.formatDate(new Date(), 'YYYY-MM-DD'))
+const timeEndSelect = ref(date.formatDate(new Date(), 'HH:mm'))
 
 </script>
 
@@ -146,8 +152,17 @@ const denomination = ref(0)
           <div class="col-3 text-grey-7">
             {{ tc('生效时间') }}
           </div>
-          <div class="col" style="max-width: 400px; word-break: break-all; word-wrap: break-word; white-space: normal;">
-            2023-1-1
+          <div class="col-9 row items-center">
+            <q-input class="col"
+                     v-model="dateStartSelect"
+                     type="date"
+                     outlined
+                     dense/>
+            <q-input class="col"
+                     v-model="timeStartSelect"
+                     type="time"
+                     outlined
+                     dense/>
           </div>
         </div>
 
@@ -155,8 +170,17 @@ const denomination = ref(0)
           <div class="col-3 text-grey-7">
             {{ tc('失效时间') }}
           </div>
-          <div class="col">
-            2024-1-1
+          <div class="col-9 row items-center">
+            <q-input class="col"
+                     v-model="dateEndSelect"
+                     type="date"
+                     outlined
+                     dense/>
+            <q-input class="col"
+                     v-model="timeEndSelect"
+                     type="time"
+                     outlined
+                     dense/>
           </div>
         </div>
 
