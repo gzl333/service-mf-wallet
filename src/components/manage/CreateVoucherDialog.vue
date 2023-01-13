@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed/* , PropType  */ } from 'vue'
-// import { navigateToUrl } from 'single-spa'
+import { navigateToUrl } from 'single-spa'
 import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
@@ -45,9 +45,10 @@ const MAX_AMOUNT = 10000 // 单次创建最大数量
 
 // dom refs
 const denominationInput = ref<QInput>()
+const amountInput = ref<QInput>()
 
 // refs
-const denomination = ref(0)
+const denomination = ref(1000)
 const amount = ref(1)
 const username = ref('')
 
@@ -76,6 +77,7 @@ const onOKClick = async () => {
       timeout: 5000,
       multiLine: false
     })
+    return
   }
   // 时间
   if (moment.utc(startDateTimeStr.value).isAfter(moment.utc(endDateTimeStr.value))) {
@@ -89,11 +91,41 @@ const onOKClick = async () => {
       timeout: 5000,
       multiLine: false
     })
+    return
+  }
+  // 数量
+  if (amount.value < 0 || amount.value > MAX_AMOUNT) {
+    amountInput.value?.focus()
+    Notify.create({
+      classes: 'notification-negative shadow-15',
+      icon: 'error',
+      textColor: 'negative',
+      message: `${tc('数量应在以下区间之中')}1-${MAX_AMOUNT}`,
+      position: 'bottom',
+      closeBtn: true,
+      timeout: 5000,
+      multiLine: false
+    })
+    return
   }
 
   // 创建代金券
   try {
-    const respPostAdminCashcoupon = await api.wallet.admin.postAdminCashcoupon({
+    // notify
+    const dismiss = Notify.create({
+      classes: 'notification-positive shadow-15',
+      // icon: 'mdi-check-circle',
+      spinner: true,
+      textColor: 'positive',
+      message: `${tc('正在创建代金券')}`,
+      position: 'bottom',
+      closeBtn: true,
+      timeout: 0, // infinite
+      multiLine: false
+    })
+
+    // req： 同时发出多个网络请求，并等待所有成功结果
+    void await Promise.all([...Array(Number(amount.value))].map(() => api.wallet.admin.postAdminCashcoupon({
       body: {
         face_value: denomination.value.toString(),
         effective_time: startDateTimeStr.value,
@@ -101,10 +133,26 @@ const onOKClick = async () => {
         app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id,
         ...(username.value !== '' ? { username: username.value } : {})
       }
-    })
-    console.log(respPostAdminCashcoupon)
+    })))
+
     // notify
-    // jump
+    dismiss()
+    Notify.create({
+      classes: 'notification-positive shadow-15',
+      icon: 'mdi-check-circle',
+      // spinner: true,
+      textColor: 'positive',
+      message: `${tc('成功创建代金券')}:${amount.value}${tc('张')}`,
+      position: 'bottom',
+      closeBtn: true,
+      timeout: 5000, // infinite
+      multiLine: false
+    })
+
+    // close
+    onDialogHide()
+    // jump： stamp是时间戳，唯一作用是防止进入相同路径而不刷新
+    navigateToUrl('/my/wallet/manage/voucher?stamp=' + new Date().getTime())
   } catch (exception) {
     exceptionNotifier(exception)
   }
@@ -265,6 +313,7 @@ const onOKClick = async () => {
             {{ tc('数量') }}
           </div>
           <q-input
+            ref="amountInput"
             class="col q-mt-md"
             style="min-width: 200px"
             v-model.number.trim="amount"

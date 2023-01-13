@@ -11,10 +11,9 @@ import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 import type { VoucherInterface } from 'stores/store'
 
 // const props = defineProps({
-//   foo: {
-//     type: String as PropType<'bar'>,
-//     required: false,
-//     default: ''
+//   refresh: {
+//     type: Boolean,
+//     required: false
 //   }
 // })
 // const emits = defineEmits(['change', 'delete'])
