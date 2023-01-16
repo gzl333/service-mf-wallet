@@ -83,6 +83,7 @@ const releaseTime = process.env.releaseTime
             </q-item>
 
             <q-item
+              v-if="store.items.fedRole === 'federal-admin'"
               clickable
               :active="activeItem === 'manage'"
               @click="navigateToUrl('/my/wallet/manage')"

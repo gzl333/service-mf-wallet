@@ -15,7 +15,7 @@ export default function () {
         textColor: 'primary',
         icon: 'mdi-checkbox-multiple-marked',
         // html: true,
-        message: isSecret ? `${tc('hooks.useCopyToClipboard.content_copied')}` : `${text} ${tc('hooks.useCopyToClipboard.copied')}`,
+        message: isSecret ? `${tc('已经复制到剪切板')}` : `${text} ${tc('已经复制到剪切板')}`,
         position: 'bottom',
         closeBtn: false,
         // timeout: 2000,

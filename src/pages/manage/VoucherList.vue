@@ -5,8 +5,10 @@ import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
 import api from 'src/api'
+import { exportFile, useQuasar } from 'quasar'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
+import useCopyToClipboard from 'src/hooks/useCopyToClipboard'
 
 import type { VoucherInterface } from 'stores/store'
 
@@ -22,8 +24,21 @@ const { tc } = i18n.global
 const store = useStore()
 // const route = useRoute()
 // const router = useRouter()
+const $q = useQuasar()
 
 const exceptionNotifier = useExceptionNotifier()
+
+// 复制信息到剪切板
+const clickToCopy = useCopyToClipboard()
+
+// table row hover
+const hoverRow = ref('')
+const onMouseEnterRow = (rowName: string) => {
+  hoverRow.value = rowName
+}
+const onMouseLeaveRow = () => {
+  hoverRow.value = ''
+}
 
 // table loading status
 const isLoading = ref(false)
@@ -110,7 +125,6 @@ const columns = computed(() => [
   {
     name: 'status',
     label: (() => tc('状态'))(),
-    field: 'status',
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -119,7 +133,6 @@ const columns = computed(() => [
   {
     name: 'id',
     label: (() => tc('代金券ID'))(),
-    field: 'id',
     align: 'center',
     classes: 'ellipsis',
     headerStyle: 'padding: 0 0 0 1px',
@@ -128,7 +141,6 @@ const columns = computed(() => [
   {
     name: 'serviceNode',
     label: (() => tc('服务单元'))(),
-    field: 'serviceNode',
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px; min-width: 150px; max-width: 200px; word-break: break-all; word-wrap: break-word; white-space: normal;',
@@ -137,7 +149,6 @@ const columns = computed(() => [
   {
     name: 'resourceType',
     label: (() => tc('资源种类'))(),
-    field: 'resourceType',
     align: 'center',
     classes: 'ellipsis',
     headerStyle: 'padding: 0 0 0 1px',
@@ -146,7 +157,6 @@ const columns = computed(() => [
   {
     name: 'redeemer',
     label: (() => tc('兑换者'))(),
-    field: 'redeemer',
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -155,7 +165,6 @@ const columns = computed(() => [
   {
     name: 'redeemTime',
     label: (() => tc('兑换日期'))(),
-    field: 'redeemTime',
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -164,7 +173,6 @@ const columns = computed(() => [
   {
     name: 'expirationTime',
     label: (() => tc('失效期'))(),
-    field: 'expirationTime',
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px; max-width: 150px; word-break: break-all; word-wrap: break-word; white-space: normal;',
@@ -173,7 +181,6 @@ const columns = computed(() => [
   {
     name: 'denomination',
     label: (() => tc('原始面额'))(),
-    field: 'denomination',
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -182,7 +189,6 @@ const columns = computed(() => [
   {
     name: 'balance',
     label: (() => tc('余额'))(),
-    field: 'balance',
     align: 'center',
     classes: 'ellipsis',
     headerStyle: 'padding: 0 0 0 1px',
@@ -191,7 +197,6 @@ const columns = computed(() => [
   {
     name: 'creator',
     label: (() => tc('创建者'))(),
-    field: 'creator',
     align: 'center',
     style: 'padding: 15px 0px; width: 100px', // 固定宽度防止更新状态时抖动
     headerStyle: 'padding: 0 2px'
@@ -199,7 +204,6 @@ const columns = computed(() => [
   {
     name: 'code',
     label: (() => tc('兑换码'))(),
-    field: 'code',
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -208,7 +212,6 @@ const columns = computed(() => [
   {
     name: 'operation',
     label: (() => tc('操作'))(),
-    field: 'operation',
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px;width: 100px;',
@@ -219,6 +222,48 @@ const columns = computed(() => [
 const rowSelection = ref<VoucherInterface[]>([])
 const clearRowSelection = () => {
   rowSelection.value = []
+}
+
+// export to csv
+const exportTable = () => {
+  // encoding to csv format
+  const content =
+    [['代金券ID', '服务单元', '资源种类', '创建时间', '失效时间', '原始面额', '当前余额', '兑换状态', /* '兑换者', */ '兑换码']] // title
+      .concat(
+        // rows
+        rowSelection.value.map(row => [
+          row.id,
+          (i18n.global.locale === 'zh' ? row.app_service?.name : row.app_service?.name_en) as string,
+          row.app_service?.category as string,
+          row.creation_time,
+          row.expiration_time,
+          row.face_value,
+          row.balance,
+          row.status,
+          /*  '未提供', */
+          row.exchange_code
+        ])
+      )
+      .join('\r\n')
+
+  const status = exportFile(
+    `${tc('导出代金券列表')}-${new Date().toLocaleString()}.csv`,
+    '\ufeff' + content,
+    'text/csv'
+  )
+
+  if (status !== true) {
+    $q.notify({
+      classes: 'notification-negative shadow-15',
+      icon: 'error',
+      textColor: 'negative',
+      message: `${tc('浏览器拒绝下载csv文件，请检查浏览器设置')}`,
+      position: 'bottom',
+      closeBtn: true,
+      timeout: 5000,
+      multiLine: false
+    })
+  }
 }
 
 </script>
@@ -345,24 +390,6 @@ const clearRowSelection = () => {
 
     </div>
 
-    <div class="row items-center justify-between">
-
-      <div v-if="pagination.count" class="col-auto row items-center">
-
-        <div class="text-grey">{{ tc('选中总计') }}</div>
-        <div class="">{{ rowSelection.length }}</div>
-
-        <!--        <q-btn class="col-auto q-mx-md" flat no-caps dense color="primary">批量删除</q-btn>-->
-
-      </div>
-
-      <div class="col-auto row items-center">
-        <div class="col-auto text-grey">{{ tc('搜索结果总计') }}</div>
-        <div class="col-auto ">{{ pagination.count }}</div>
-      </div>
-
-    </div>
-
     <q-table
       flat
       card-class=""
@@ -382,11 +409,54 @@ const clearRowSelection = () => {
     >
 
       <template v-slot:header-selection="scope">
-        <q-checkbox style="" v-model="scope.selected" dense size="xs"/>
+        <q-checkbox v-model="scope.selected" dense size="xs">
+          <q-tooltip> {{ tc('选择本页全部') }}</q-tooltip>
+        </q-checkbox>
+      </template>
+
+      <template v-slot:top>
+
+        <div class="row full-width items-center justify-between">
+
+          <div v-if="pagination.count" class="col-auto row items-center">
+
+            <div class="text-grey">{{ tc('选中') }}</div>
+            <div class="">{{ rowSelection.length }}</div>
+            <div class="q-px-xs">/</div>
+            <div class="col-auto text-grey">{{ tc('搜索总计') }}</div>
+            <div class="col-auto ">{{ pagination.count }}</div>
+
+          </div>
+
+          <div class="col-auto row items-center q-gutter-x-xs">
+            <div class="col-auto text-grey">批量操作</div>
+            <q-btn
+              :disable="rowSelection.length === 0"
+              class="col-auto"
+              color="primary"
+              :label="tc('删除')"
+              no-caps
+              dense
+            />
+            <q-btn
+              :disable="rowSelection.length === 0"
+              class="col-auto"
+              color="primary"
+              :label="tc('导出为csv文件')"
+              no-caps
+              dense
+              @click="exportTable"
+            />
+          </div>
+        </div>
+
       </template>
 
       <template v-slot:body="props">
-        <q-tr :props="props">
+        <q-tr :props="props"
+              @mouseenter="onMouseEnterRow(props.row.id)"
+              @mouseleave="onMouseLeaveRow"
+        >
 
           <q-td auto-width>
             <q-checkbox v-model="props.selected" dense size="xs"/>
@@ -443,7 +513,49 @@ const clearRowSelection = () => {
           </q-td>
 
           <q-td key="resourceType" :props="props">
-            {{ props.row.app_service?.category }}
+
+            <div v-if="props.row.app_service?.category === 'vms-server'"
+                 class="column items-center"
+            >
+              <q-icon
+                class="col"
+                name="computer"
+                color="primary"
+                size="md"
+              />
+              <div class="col">
+                {{ tc('云主机') }}
+              </div>
+            </div>
+
+            <div v-if="props.row.app_service?.category === 'vms-object'"
+                 class="column items-center"
+            >
+              <q-icon
+                class="col"
+                name="mdi-database"
+                color="primary"
+                size="md"
+              />
+              <div class="col">
+                {{ tc('对象存储') }}
+              </div>
+            </div>
+
+            <div v-if="props.row.app_service?.category === 'high-cloud'"
+                 class="column items-center"
+            >
+              <q-icon
+                class="col"
+                name="mdi-rocket-launch"
+                color="primary"
+                size="md"
+              />
+              <div class="col">
+                {{ tc('高性能计算') }}
+              </div>
+            </div>
+
           </q-td>
 
           <q-td key="redeemer" :props="props">
@@ -488,6 +600,16 @@ const clearRowSelection = () => {
 
           <q-td key="code" :props="props">
             {{ props.row.exchange_code }}
+            <q-btn v-if="hoverRow === props.row.id"
+                   class="col-shrink q-px-xs q-ma-none" flat no-caps dense icon="content_copy" size="xs" color="primary"
+                   @click="clickToCopy(props.row.exchange_code)">
+              <q-tooltip>
+                {{ tc('复制到剪切板') }}
+              </q-tooltip>
+            </q-btn>
+            <q-btn v-else
+                   class="col-shrink q-px-xs q-ma-none invisible" flat dense icon="content_copy" size="xs">
+            </q-btn>
           </q-td>
 
           <!--          <q-td key="creation" :props="props">-->
