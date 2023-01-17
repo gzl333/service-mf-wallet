@@ -188,9 +188,9 @@ export const useStore = defineStore('wallet', {
     }
   }),
   getters: {
-    // 根据管理员权限，返回serviceOption：1.联邦管理员获取全部服务单元；2.服务单元管理员获取全部管理权限对应服务单元
-    getServiceOptionsByRole: state => (isFedAdmin: boolean) => {
-      const services = (isFedAdmin ? state.tables.serviceTable.allIds : state.items.adminServiceIds).map(serviceId => {
+    // 根据所需，返回service options
+    getServiceOptions: state => (style: 'withAll' | 'withoutAll' | 'admin') => {
+      const services = (style === 'admin' ? state.items.adminServiceIds : state.tables.serviceTable.allIds).map(serviceId => {
         const currentService = state.tables.serviceTable.byId[serviceId]
         return {
           value: currentService?.id,
@@ -198,22 +198,45 @@ export const useStore = defineStore('wallet', {
           labelEn: currentService?.name_en
         }
       })
-      services.unshift({
-        value: 'all',
-        label: '全部服务单元',
-        labelEn: 'All Service Units'
-      })
+      if (style === 'withAll') {
+        services.unshift(
+          {
+            value: 'all',
+            label: '全部服务单元',
+            labelEn: 'All Service Units'
+          }
+        )
+      }
       return services
-    },
-    getAllServices: state => state.tables.serviceTable.allIds
-      .map(serviceId => {
-        const currentService = state.tables.serviceTable.byId[serviceId]
-        return {
-          value: currentService?.id,
-          label: currentService?.name,
-          labelEn: currentService?.name_en
-        }
-      })
+    }
+    // // 根据管理员权限，返回serviceOption：1.联邦管理员获取全部服务单元；2.服务单元管理员获取全部管理权限对应服务单元
+    // getServiceOptionsByRole: state => (isFedAdmin: boolean) => {
+    //   const services = (isFedAdmin ? state.tables.serviceTable.allIds : state.items.adminServiceIds).map(serviceId => {
+    //     const currentService = state.tables.serviceTable.byId[serviceId]
+    //     return {
+    //       value: currentService?.id,
+    //       label: currentService?.name,
+    //       labelEn: currentService?.name_en
+    //     }
+    //   })
+    //   services.unshift(
+    //     {
+    //       value: 'all',
+    //       label: '全部服务单元',
+    //       labelEn: 'All Service Units'
+    //     }
+    //   )
+    //   return services
+    // },
+    // getAllServices: state => state.tables.serviceTable.allIds
+    //   .map(serviceId => {
+    //     const currentService = state.tables.serviceTable.byId[serviceId]
+    //     return {
+    //       value: currentService?.id,
+    //       label: currentService?.name,
+    //       labelEn: currentService?.name_en
+    //     }
+    //   })
   },
   actions: {
     /* items */

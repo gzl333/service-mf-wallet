@@ -8,11 +8,18 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         path: 'account',
-        component: () => import('pages/AccountList.vue')
-      },
-      {
-        path: 'voucher',
-        component: () => import('pages/VoucherList.vue')
+        component: () => import('pages/account/AccountIndex.vue'),
+        redirect: '/my/wallet/account/list',
+        children: [
+          {
+            path: 'list',
+            component: () => import('pages/account/AccountList.vue')
+          },
+          {
+            path: 'voucher',
+            component: () => import('pages/account/VoucherList.vue')
+          }
+        ]
       },
       {
         path: 'payment',

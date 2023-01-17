@@ -1,21 +1,22 @@
 <script setup lang="ts">
-import { ref, computed, onMounted/* , PropType */ } from 'vue'
+import { ref, computed, /* PropType, */ onMounted } from 'vue'
 // import { navigateToUrl } from 'single-spa'
 import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
+// import { useQuasar } from 'quasar'
 import api from 'src/api'
-import { exportFile, useQuasar } from 'quasar'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
-import useCopyToClipboard from 'src/hooks/useCopyToClipboard'
+// import useCopyToClipboard from 'src/hooks/useCopyToClipboard'
 
 import type { VoucherInterface } from 'stores/store'
 
 // const props = defineProps({
-//   refresh: {
-//     type: Boolean,
-//     required: false
+//   foo: {
+//     type: String as PropType<'bar'>,
+//     required: false,
+//     default: ''
 //   }
 // })
 // const emits = defineEmits(['change', 'delete'])
@@ -24,29 +25,58 @@ const { tc } = i18n.global
 const store = useStore()
 // const route = useRoute()
 // const router = useRouter()
-const $q = useQuasar()
+// const $q = useQuasar()
 const exceptionNotifier = useExceptionNotifier()
-
-// 复制信息到剪切板
-const clickToCopy = useCopyToClipboard()
-
-// table row hover
-const hoverRow = ref('')
-const onMouseEnterRow = (rowName: string) => {
-  hoverRow.value = rowName
-}
-const onMouseLeaveRow = () => {
-  hoverRow.value = ''
-}
-
-// table loading status
-const isLoading = ref(false)
-
-const rows = ref<VoucherInterface[]>()
+// const clickToCopy = useCopyToClipboard()
 
 // 筛选服务单元
 const serviceOptions = computed(() => store.getServiceOptions('withAll'))
 const serviceSelection = ref('all')
+
+// 筛选服务类型
+const typeOptions = computed(() => [
+  {
+    value: 'all',
+    label: '所有服务类型',
+    labelEn: 'All Types'
+  },
+  {
+    value: 'vms-server',
+    label: '云主机',
+    labelEn: 'Cloud Server'
+  },
+  {
+    value: 'vms-object',
+    label: '对象存储',
+    labelEn: 'Object Storage'
+  },
+  {
+    value: 'high-cloud',
+    label: '高等级云',
+    labelEn: 'High Level Security Cloud'
+  },
+  {
+    value: 'hpc',
+    label: '高性能计算',
+    labelEn: 'High Performance Computing'
+  }
+])
+const typeSelection = ref('all')
+
+// 筛选账户
+const accountOptions = computed(() => [
+  {
+    value: 'all',
+    label: '全部账户',
+    labelEn: 'All Accounts'
+  },
+  {
+    value: 'group',
+    label: '查询指定项目组',
+    labelEn: 'Check one of the Groups'
+  }
+])
+const accountSelection = ref('all')
 
 // 筛选代金券状态
 const statusOptions = computed(() => [
@@ -56,52 +86,17 @@ const statusOptions = computed(() => [
     labelEn: 'All Status'
   },
   {
-    value: 'wait',
-    label: '待兑换',
-    labelEn: 'To Be Redeemed'
-  },
-  {
-    value: 'available',
-    label: '在用',
-    labelEn: 'Redeemed'
-  },
-  {
-    value: 'cancelled',
-    label: '失效',
-    labelEn: 'Invalid'
-  },
-  {
-    value: 'deleted',
-    label: '已删除',
-    labelEn: 'Deleted'
+    value: 'valid',
+    label: '有效',
+    labelEn: 'Valid'
   }
 ])
-const statusSelection = ref<'all' | 'wait' | 'available' | 'cancelled' | 'deleted'>('all')
+const statusSelection = ref<'all' | 'valid' | 'invalid'>('all')
 
-// 根据当前搜索条件，更新rows，并更新count值
-const loadRows = async () => {
-  // table loading
-  isLoading.value = true
-  // request
-  try {
-    const respGetAdminVoucher = await api.wallet.admin.getAdminCashcoupon({
-      query: {
-        page: pagination.value.page,
-        page_size: pagination.value.rowsPerPage,
-        ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id }), // id -> pay_app_service_id
-        ...(statusSelection.value !== 'all' && { status: statusSelection.value })
-      }
-    })
-    // 拿到rows值，给table用
-    rows.value = respGetAdminVoucher.data.results
-    // pagination count
-    pagination.value.count = respGetAdminVoucher.data.count
-  } catch (exception) {
-    exceptionNotifier(exception)
-  }
-  // table stop loading
-  isLoading.value = false
-}
+// table loading status
+const isLoading = ref(false)
+
+const rows = ref<VoucherInterface[]>()
 
 // 被pagination组件使用
 const pagination = ref({
@@ -118,11 +113,48 @@ const resetPageSelection = () => {
 // 重置所有搜索条件
 const resetFilters = () => {
   serviceSelection.value = 'all'
+  typeSelection.value = 'all'
+  accountSelection.value = 'all'
   statusSelection.value = 'all'
+}
+
+// 根据当前搜索条件，更新rows，并更新count值
+const loadRows = async () => {
+  // table loading
+  isLoading.value = true
+  // request
+  try {
+    const respGetVoucher = await api.wallet.cashcoupon.getCashCoupon({
+      query: {
+        page: pagination.value.page,
+        page_size: pagination.value.rowsPerPage,
+        ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id }), // id -> pay_app_service_id
+        ...(statusSelection.value !== 'all' && { available: 'true' })
+      }
+    })
+    console.log(respGetVoucher.data.results)
+    // 拿到rows值，给table用
+    rows.value = respGetVoucher.data.results
+    // pagination count
+    pagination.value.count = respGetVoucher.data.count
+  } catch (exception) {
+    exceptionNotifier(exception)
+  }
+  // table stop loading
+  isLoading.value = false
 }
 
 // onMounted时加载初始table第一页
 onMounted(loadRows)
+
+// table row hover
+const hoverRow = ref('')
+const onMouseEnterRow = (rowName: string) => {
+  hoverRow.value = rowName
+}
+const onMouseLeaveRow = () => {
+  hoverRow.value = ''
+}
 
 // 分栏定义
 const columns = computed(() => [
@@ -149,14 +181,6 @@ const columns = computed(() => [
     classes: 'ellipsis',
     style: 'padding: 15px 0px; min-width: 150px; max-width: 200px; word-break: break-all; word-wrap: break-word; white-space: normal;',
     headerStyle: 'padding: 0 2px'
-  },
-  {
-    name: 'resourceType',
-    label: (() => tc('资源种类'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    headerStyle: 'padding: 0 0 0 1px',
-    style: 'padding: 15px 0px; min-width: 80px; max-width: 100px; word-break: break-all; word-wrap: break-word; white-space: normal;'
   },
   {
     name: 'redeemer',
@@ -199,21 +223,6 @@ const columns = computed(() => [
     style: 'padding: 15px 0px; max-width: 100px; word-break: break-all; word-wrap: break-word; white-space: normal;'
   },
   {
-    name: 'creator',
-    label: (() => tc('创建者'))(),
-    align: 'center',
-    style: 'padding: 15px 0px; width: 100px', // 固定宽度防止更新状态时抖动
-    headerStyle: 'padding: 0 2px'
-  },
-  {
-    name: 'code',
-    label: (() => tc('兑换码'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px',
-    headerStyle: 'padding: 0 2px'
-  },
-  {
     name: 'operation',
     label: (() => tc('操作'))(),
     align: 'center',
@@ -226,48 +235,6 @@ const columns = computed(() => [
 const rowSelection = ref<VoucherInterface[]>([])
 const clearRowSelection = () => {
   rowSelection.value = []
-}
-
-// export to csv
-const exportTable = () => {
-  // encoding to csv format
-  const content =
-    [['代金券ID', '服务单元', '资源种类', '创建时间', '失效时间', '原始面额', '当前余额', '兑换状态', /* '兑换者', */ '兑换码']] // title
-      .concat(
-        // rows
-        rowSelection.value.map(row => [
-          row.id,
-          (i18n.global.locale === 'zh' ? row.app_service?.name : row.app_service?.name_en) as string,
-          row.app_service?.category as string,
-          row.creation_time,
-          row.expiration_time,
-          row.face_value,
-          row.balance,
-          row.status,
-          /*  '未提供', */
-          row.exchange_code
-        ])
-      )
-      .join('\r\n')
-
-  const status = exportFile(
-    `${tc('导出代金券列表')}-${new Date().toLocaleString()}.csv`,
-    '\ufeff' + content,
-    'text/csv'
-  )
-
-  if (status !== true) {
-    $q.notify({
-      classes: 'notification-negative shadow-15',
-      icon: 'error',
-      textColor: 'negative',
-      message: `${tc('浏览器拒绝下载csv文件，请检查浏览器设置')}`,
-      position: 'bottom',
-      closeBtn: true,
-      timeout: 5000,
-      multiLine: false
-    })
-  }
 }
 
 </script>
@@ -384,12 +351,6 @@ const exportTable = () => {
 
         </div>
 
-        <div class="col-auto q-gutter-x-sm">
-          <q-btn unelevated no-caps color="primary" @click="store.triggerCreateVoucherDialog()">
-            创建代金券
-          </q-btn>
-        </div>
-
       </div>
 
     </div>
@@ -442,15 +403,6 @@ const exportTable = () => {
               no-caps
               dense
             />
-            <q-btn
-              :disable="rowSelection.length === 0"
-              class="col-auto"
-              color="primary"
-              :label="tc('导出为csv文件')"
-              no-caps
-              dense
-              @click="exportTable"
-            />
           </div>
         </div>
 
@@ -467,45 +419,46 @@ const exportTable = () => {
           </q-td>
 
           <q-td key="status" :props="props">
-            <q-chip v-if="props.row.status === 'wait'"
-                    style="width: 80px;"
-                    color="primary"
-                    text-color="white"
-                    icon="more_horiz">
-              <div class="row justify-center">
-                {{ tc('待兑换') }}
-              </div>
-            </q-chip>
+            {{ props.row.status }}
+            <!--            <q-chip v-if="props.row.status === 'wait'"-->
+            <!--                    style="width: 80px;"-->
+            <!--                    color="primary"-->
+            <!--                    text-color="white"-->
+            <!--                    icon="more_horiz">-->
+            <!--              <div class="row justify-center">-->
+            <!--                {{ tc('待兑换') }}-->
+            <!--              </div>-->
+            <!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'available'"
-                    style="width: 80px;"
-                    color="light-green"
-                    text-color="white"
-                    icon="done">
-              <div class="row justify-center">
-                {{ tc('在用') }}
-              </div>
-            </q-chip>
+            <!--            <q-chip v-if="props.row.status === 'available'"-->
+            <!--                    style="width: 80px;"-->
+            <!--                    color="light-green"-->
+            <!--                    text-color="white"-->
+            <!--                    icon="done">-->
+            <!--              <div class="row justify-center">-->
+            <!--                {{ tc('在用') }}-->
+            <!--              </div>-->
+            <!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'cancelled'"
-                    style="width: 80px;"
-                    color="red"
-                    text-color="white"
-                    icon="close">
-              <div class="row justify-center">
-                {{ tc('失效') }}
-              </div>
-            </q-chip>
+            <!--            <q-chip v-if="props.row.status === 'cancelled'"-->
+            <!--                    style="width: 80px;"-->
+            <!--                    color="red"-->
+            <!--                    text-color="white"-->
+            <!--                    icon="close">-->
+            <!--              <div class="row justify-center">-->
+            <!--                {{ tc('失效') }}-->
+            <!--              </div>-->
+            <!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'deleted'"
-                    style="width: 80px;"
-                    color="grey"
-                    text-color="white"
-                    icon="delete_forever">
-              <div class="row justify-center">
-                {{ tc('已删除') }}
-              </div>
-            </q-chip>
+            <!--            <q-chip v-if="props.row.status === 'deleted'"-->
+            <!--                    style="width: 80px;"-->
+            <!--                    color="grey"-->
+            <!--                    text-color="white"-->
+            <!--                    icon="delete_forever">-->
+            <!--              <div class="row justify-center">-->
+            <!--                {{ tc('已删除') }}-->
+            <!--              </div>-->
+            <!--            </q-chip>-->
           </q-td>
 
           <q-td key="id" :props="props">
@@ -513,81 +466,52 @@ const exportTable = () => {
           </q-td>
 
           <q-td key="serviceNode" :props="props">
-            {{ i18n.global.locale === 'zh' ? props.row.app_service?.name : props.row.app_service?.name_en }}
-          </q-td>
+            <div class="column items-center">
 
-          <q-td key="resourceType" :props="props">
-
-            <div v-if="props.row.app_service?.category === 'vms-server'"
-                 class="column items-center"
-            >
               <q-icon
+                v-if="props.row.app_service?.category === 'vms-server'"
                 class="col"
                 name="computer"
                 color="primary"
                 size="md"
               />
-              <div class="col">
-                {{ tc('云主机') }}
-              </div>
-            </div>
 
-            <div v-if="props.row.app_service?.category === 'vms-object'"
-                 class="column items-center"
-            >
               <q-icon
+                v-if="props.row.app_service?.category === 'vms-object'"
                 class="col"
                 name="mdi-database"
                 color="primary"
                 size="md"
               />
-              <div class="col">
-                {{ tc('对象存储') }}
-              </div>
-            </div>
 
-            <div v-if="props.row.app_service?.category === 'hpc'"
-                 class="column items-center"
-            >
               <q-icon
+                v-if="props.row.app_service?.category === 'hpc'"
                 class="col"
                 name="mdi-rocket-launch"
                 color="primary"
                 size="md"
               />
-              <div class="col">
-                {{ tc('高性能计算') }}
-              </div>
-            </div>
 
-            <div v-if="props.row.app_service?.category === 'high-cloud'"
-                 class="column items-center"
-            >
               <q-icon
+                v-if="props.row.app_service?.category === 'high-cloud'"
                 class="col"
                 name="mdi-security"
                 color="primary"
                 size="md"
               />
-              <div class="col">
-                {{ tc('高等级云') }}
-              </div>
-            </div>
 
-            <div v-if="props.row.app_service?.category === 'other'"
-                 class="column items-center"
-            >
               <q-icon
+                v-if="props.row.app_service?.category === 'other'"
                 class="col"
                 name="mdi-help-circle-outline"
                 color="primary"
                 size="md"
               />
+
               <div class="col">
-                {{ tc('其它') }}
+                {{ i18n.global.locale === 'zh' ? props.row.app_service?.name : props.row.app_service?.name_en }}
               </div>
             </div>
-
           </q-td>
 
           <q-td key="redeemer" :props="props">
@@ -625,36 +549,6 @@ const exportTable = () => {
           <q-td key="balance" :props="props">
             {{ props.row.balance }} {{ tc('点', Number(props.row.balance)) }}
           </q-td>
-
-          <q-td key="creator" :props="props">
-            API暂未提供
-          </q-td>
-
-          <q-td key="code" :props="props">
-            {{ props.row.exchange_code }}
-            <q-btn v-if="hoverRow === props.row.id"
-                   class="col-shrink q-px-xs q-ma-none" flat no-caps dense icon="content_copy" size="xs" color="primary"
-                   @click="clickToCopy(props.row.exchange_code)">
-              <q-tooltip>
-                {{ tc('复制到剪切板') }}
-              </q-tooltip>
-            </q-btn>
-            <q-btn v-else
-                   class="col-shrink q-px-xs q-ma-none invisible" flat dense icon="content_copy" size="xs">
-            </q-btn>
-          </q-td>
-
-          <!--          <q-td key="creation" :props="props">-->
-          <!--            &lt;!&ndash;            <div v-if="i18n.global.locale==='zh'">&ndash;&gt;-->
-          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>&ndash;&gt;-->
-          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>&ndash;&gt;-->
-          <!--            &lt;!&ndash;            </div>&ndash;&gt;-->
-
-          <!--            &lt;!&ndash;            <div v-else>&ndash;&gt;-->
-          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>&ndash;&gt;-->
-          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>&ndash;&gt;-->
-          <!--            &lt;!&ndash;            </div>&ndash;&gt;-->
-          <!--          </q-td>-->
 
           <q-td key="operation" :props="props">
             <q-btn flat dense no-caps color="primary">
@@ -700,7 +594,6 @@ const exportTable = () => {
         </div>
       </template>
     </q-table>
-
   </div>
 </template>
 

@@ -58,17 +58,17 @@ const releaseTime = process.env.releaseTime
               </q-item-section>
             </q-item>
 
-            <q-item
-              clickable
-              :active="activeItem === 'voucher'"
-              @click="navigateToUrl('/my/wallet/voucher')"
-              active-class="active-item"
-            >
-              <q-item-section class="column items-center">
-                <q-icon name="request_quote" size="lg"/>
-                <div class="active-text text-center">{{ tc('代金券') }}</div>
-              </q-item-section>
-            </q-item>
+<!--            <q-item-->
+<!--              clickable-->
+<!--              :active="activeItem === 'voucher'"-->
+<!--              @click="navigateToUrl('/my/wallet/voucher')"-->
+<!--              active-class="active-item"-->
+<!--            >-->
+<!--              <q-item-section class="column items-center">-->
+<!--                <q-icon name="request_quote" size="lg"/>-->
+<!--                <div class="active-text text-center">{{ tc('代金券') }}</div>-->
+<!--              </q-item-section>-->
+<!--            </q-item>-->
 
             <q-item
               clickable

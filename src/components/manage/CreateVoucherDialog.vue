@@ -36,7 +36,7 @@ const {
 const exceptionNotifier = useExceptionNotifier()
 
 // 筛选服务单元
-const serviceOptions = computed(() => store.getAllServices)
+const serviceOptions = computed(() => store.getServiceOptions('withoutAll'))
 const serviceSelection = ref('1')
 
 // 限额设置
