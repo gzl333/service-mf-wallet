@@ -140,7 +140,7 @@ const onMouseLeaveRow = () => {
           </q-td>
 
           <q-td key="voucher" :props="props">
-            TBD
+            {{ props.row.voucher }} {{ tc('张')}}
           </q-td>
 
           <q-td key="date" :props="props">

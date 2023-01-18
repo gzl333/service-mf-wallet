@@ -101,6 +101,7 @@ export interface AccountInterface {
   // 补充字段
   type: 'personal' | 'group'
   balance: number
+  voucher: number // 代金券数量
 }
 
 // export interface BalanceInterface {
@@ -348,11 +349,18 @@ export const useStore = defineStore('wallet', {
 
           // 补充字段
           type: 'personal',
-          balance: 0
+          balance: 0,
+          voucher: 0
         }
+
         // get personal balance
         const respPersonalBalance = await api.wallet.account.getAccountBalanceUser()
         personalAccount.balance = respPersonalBalance.data.balance
+
+        // get personal voucher count
+        const respPersonalVoucher = await api.wallet.cashcoupon.getCashCoupon()
+        personalAccount.voucher = respPersonalVoucher.data.count
+
         // add personal account to accountTable
         Object.assign(this.tables.accountTable.byId, { personal: personalAccount })
         this.tables.accountTable.allIds.unshift('personal')
@@ -364,10 +372,13 @@ export const useStore = defineStore('wallet', {
         for (const data of respGroup.data.results) {
           // get group balance
           const respGroupBalance = await api.wallet.account.getAccountBalanceVo({ path: { vo_id: data.id } })
-          // 添加type/balance字段
+          // get group voucher count
+          const respGroupVoucher = await api.wallet.cashcoupon.getCashCoupon({ query: { vo_id: data.id } })
+          // 添加type/balance/voucher字段
           Object.assign(data, {
             type: 'group',
-            balance: respGroupBalance.data.balance
+            balance: respGroupBalance.data.balance,
+            voucher: respGroupVoucher.data.count
           })
           // 保存table
           Object.assign(this.tables.accountTable.byId, { [data.id]: data })

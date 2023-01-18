@@ -43,7 +43,7 @@ export default {
     }
   },
   cashcoupon: {
-    getCashCoupon (payload: {
+    getCashCoupon (payload?: {
       query?: {
         page?: number,
         page_size?: number,
@@ -54,7 +54,7 @@ export default {
       }
     }) {
       const config = {
-        params: payload.query
+        params: payload?.query
       }
       return axiosWallet.get('/cashcoupon', config)
     },
