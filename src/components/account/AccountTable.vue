@@ -108,13 +108,13 @@ const onMouseLeaveRow = () => {
       row-key="name"
       :loading="store.tables.accountTable.status === 'loading'"
       color="primary"
-      :loading-label="tc('components.server.ServeTable.notify_loading')"
-      :no-data-label="tc('components.server.ServeTable.no_server_available')"
+      :loading-label="tc('正在加载')"
+      :no-data-label="tc('暂无数据')"
       hide-pagination
       :pagination="{rowsPerPage: 0}"
       :filter="search"
       :filter-method="searchMethod"
-      :no-results-label="tc('components.server.ServeTable.no_search_results')"
+      :no-results-label="tc('暂无搜索结果')"
     >
 
       <template v-slot:body="props">

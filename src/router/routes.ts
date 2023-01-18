@@ -23,7 +23,18 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'payment',
-        component: () => import('pages/PaymentRecord.vue')
+        component: () => import('pages/payment/PaymentIndex.vue'),
+        redirect: '/my/wallet/payment/personal',
+        children: [
+          {
+            path: 'personal',
+            component: () => import('pages/payment/PersonalPayment.vue')
+          },
+          {
+            path: 'group',
+            component: () => import('pages/payment/GroupPayment.vue')
+          }
+        ]
       },
       {
         path: 'manage',

@@ -104,14 +104,33 @@ export interface AccountInterface {
   voucher: number // 代金券数量
 }
 
-// export interface BalanceInterface {
-//   id: string
-//   balance: string
-//   creation_time: string
-//   vo: {
-//     id: string
-//   }
-// }
+export interface PaymentInterface {
+  id: string
+  subject: string
+  payment_method: 'coupon' | 'balance'
+  executor: string
+  payer_id: string
+  payer_name: string
+  payer_type: 'user' | 'vo'
+  payable_amounts: string
+  amounts: string
+  coupon_amount: string
+  creation_time: string
+  payment_time: string
+  remark: string
+  status: 'wait' | 'success' | 'error' | 'closed'
+  status_desc: string
+  order_id: string
+  app_id: string
+  app_service_id: string
+  'coupon_historys'?: {
+    cash_coupon_id: string
+    amounts: string
+    before_payment: string
+    after_payment: string
+    creation_time: string
+  }[]
+}
 
 /* table的类型 */
 

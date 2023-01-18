@@ -1,16 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, /* PropType, */ onMounted } from 'vue'
-// import { navigateToUrl } from 'single-spa'
-import { useStore } from 'stores/store'
-// import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, PropType, onMounted } from 'vue'
+import { navigateToUrl } from 'single-spa'
+import { PaymentInterface, useStore, VoucherInterface } from 'stores/store'
+import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
-// import { useQuasar } from 'quasar'
-import api from 'src/api'
-
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
+import api from 'src/api'
 // import useCopyToClipboard from 'src/hooks/useCopyToClipboard'
-
-import type { VoucherInterface } from 'stores/store'
 
 // const props = defineProps({
 //   foo: {
@@ -25,7 +21,6 @@ const { tc } = i18n.global
 const store = useStore()
 // const route = useRoute()
 // const router = useRouter()
-// const $q = useQuasar()
 const exceptionNotifier = useExceptionNotifier()
 // const clickToCopy = useCopyToClipboard()
 
@@ -33,110 +28,88 @@ const exceptionNotifier = useExceptionNotifier()
 const serviceOptions = computed(() => store.getServiceOptions('withAll'))
 const serviceSelection = ref('all')
 
-// 筛选服务类型
-// const typeOptions = computed(() => [
-//   {
-//     value: 'all',
-//     label: '所有服务类型',
-//     labelEn: 'All Types'
-//   },
-//   {
-//     value: 'vms-server',
-//     label: '云主机',
-//     labelEn: 'Cloud Server'
-//   },
-//   {
-//     value: 'vms-object',
-//     label: '对象存储',
-//     labelEn: 'Object Storage'
-//   },
-//   {
-//     value: 'high-cloud',
-//     label: '高等级云',
-//     labelEn: 'High Level Security Cloud'
-//   },
-//   {
-//     value: 'hpc',
-//     label: '高性能计算',
-//     labelEn: 'High Performance Computing'
-//   }
-// ])
-const typeSelection = ref('all')
-
-// 筛选账户
-// const accountOptions = computed(() => [
-//   {
-//     value: 'all',
-//     label: '全部账户',
-//     labelEn: 'All Accounts'
-//   },
-//   {
-//     value: 'group',
-//     label: '查询指定项目组',
-//     labelEn: 'Check one of the Groups'
-//   }
-// ])
-const accountSelection = ref('all')
-
-// 筛选代金券状态
-const statusOptions = computed(() => [
+// 筛选支付状态
+const statusOptions = [
   {
     value: 'all',
     label: '全部状态',
     labelEn: 'All Status'
   },
   {
-    value: 'valid',
-    label: '有效',
-    labelEn: 'Valid'
+    value: 'wait',
+    label: '等待支付',
+    labelEn: 'To Be Paid'
+  },
+  {
+    value: 'success',
+    label: '支付成功',
+    labelEn: 'Succeeded'
+  },
+  {
+    value: 'error',
+    label: '等待支付',
+    labelEn: 'Failed'
+  },
+  {
+    value: 'closed',
+    label: '等待支付',
+    labelEn: 'Closed'
   }
-])
-const statusSelection = ref<'all' | 'valid' | 'invalid'>('all')
+]
+const statusSelection = ref('all')
+
+// 筛选日期
+const startTime = ref('')
+const endTime = ref('')
 
 // table loading status
 const isLoading = ref(false)
 
-const rows = ref<VoucherInterface[]>()
+const rows = ref<PaymentInterface[]>()
 
-// 被pagination组件使用
+// pagination marker 前后翻页用
 const pagination = ref({
-  page: 1, // 当前页码
-  rowsPerPage: 10, // 每页条数
-  count: 0 // 总共条数
+  has_next: false,
+  page_size: 10,
+  prev: '',
+  curr: '',
+  next: ''
 })
 
-// 复位分页
-const resetPageSelection = () => {
-  pagination.value.page = 1
-}
+// 复位分页： 应该就是根据当前筛选参数请求第一页
 
 // 重置所有搜索条件
 const resetFilters = () => {
   serviceSelection.value = 'all'
-  typeSelection.value = 'all'
-  accountSelection.value = 'all'
   statusSelection.value = 'all'
+  startTime.value = ''
+  endTime.value = ''
 }
 
-// 根据当前搜索条件，更新rows，并更新count值
-const loadRows = async () => {
+// 根据当前搜索条件，更新rows，并更新pangination
+const loadRows = async (marker?: string) => { // todo 用前后翻页作为参数，pagination处理不同
   // table loading
   isLoading.value = true
   // request
   try {
-    const respGetVoucher = await api.wallet.cashcoupon.getCashCoupon({
+    const respGetPayment = await api.wallet['payment-history'].getPaymentHistory({
       query: {
-        page: pagination.value.page,
-        page_size: pagination.value.rowsPerPage,
-        ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id }), // id -> pay_app_service_id
-        ...(statusSelection.value !== 'all' && { available: 'true' })
+        marker,
+        page_size: pagination.value.page_size,
+        ...(statusSelection.value !== 'all' && { status: statusSelection.value }),
+        ...(startTime.value !== '' && { time_start: startTime.value }),
+        ...(endTime.value !== '' && { time_end: endTime.value }),
+        ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id }) // id -> pay_app_service_id
       }
     })
-    console.log(respGetVoucher.data.results)
+    console.log(respGetPayment.data.results)
     // 拿到rows值，给table用
-    rows.value = respGetVoucher.data.results
-    // pagination count
-    pagination.value.count = respGetVoucher.data.count
+    rows.value = respGetPayment.data.results
+    // 更新pagination
+    pagination.value.prev = pagination.value.curr
+    pagination.value.curr = respGetPayment.data.marker
+    pagination.value.next = respGetPayment.data.next_marker
+    pagination.value.has_next = respGetPayment.data.has_next
   } catch (exception) {
     exceptionNotifier(exception)
   }
@@ -159,68 +132,84 @@ const onMouseLeaveRow = () => {
 // 分栏定义
 const columns = computed(() => [
   {
-    name: 'status',
-    label: (() => tc('状态'))(),
+    name: 'id',
+    label: (() => tc('支付记录ID'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'id',
-    label: (() => tc('代金券ID'))(),
+    name: 'service_node',
+    label: (() => tc('服务节点'))(),
+    align: 'center',
+    classes: 'ellipsis',
+    style: 'padding: 15px 0px',
+    headerStyle: 'padding: 0 2px'
+  },
+  {
+    name: 'subject',
+    label: (() => tc('计费途径'))(),
     align: 'center',
     classes: 'ellipsis',
     headerStyle: 'padding: 0 0 0 1px',
     style: 'width: 100px;padding: 15px 0px'
   },
   {
-    name: 'serviceNode',
-    label: (() => tc('服务单元'))(),
+    name: 'method',
+    label: (() => tc('支付方式'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px; min-width: 150px; max-width: 200px; word-break: break-all; word-wrap: break-word; white-space: normal;',
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'redeemer',
-    label: (() => tc('兑换者'))(),
+    name: 'name',
+    label: (() => tc('支付账户'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'redeemTime',
-    label: (() => tc('兑换日期'))(),
+    name: 'due_amount',
+    label: (() => tc('应付金额'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'expirationTime',
-    label: (() => tc('失效期'))(),
+    name: 'balance_amount',
+    label: (() => tc('余额支付金额'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px; max-width: 150px; word-break: break-all; word-wrap: break-word; white-space: normal;',
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'denomination',
-    label: (() => tc('原始面额'))(),
+    name: 'voucher_amount',
+    label: (() => tc('代金券支付金额'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'balance',
-    label: (() => tc('余额'))(),
+    name: 'success_time',
+    label: (() => tc('支付时间'))(),
     align: 'center',
     classes: 'ellipsis',
     headerStyle: 'padding: 0 0 0 1px',
     style: 'padding: 15px 0px; max-width: 100px; word-break: break-all; word-wrap: break-word; white-space: normal;'
+  },
+  {
+    name: 'status',
+    label: (() => tc('状态'))(),
+    align: 'center',
+    classes: 'ellipsis',
+    style: 'padding: 15px 0px',
+    headerStyle: 'padding: 0 2px'
   },
   {
     name: 'operation',
@@ -240,18 +229,18 @@ const clearRowSelection = () => {
 </script>
 
 <template>
-  <div class="VoucherList">
+  <div class="PersonalPayment">
     <div class=" column items-start justify-between q-mb-lg">
 
       <div class="col row full-width items-center justify-start q-pb-sm">
 
         <div class="col-auto q-gutter-x-sm q-pr-md">
           <q-btn unelevated no-caps color="primary"
-                 @click="resetPageSelection();loadRows();clearRowSelection()">
+                 @click="loadRows();clearRowSelection()">
             搜索
           </q-btn>
           <q-btn flat no-caps dense color="primary"
-                 @click="resetFilters();resetPageSelection();loadRows();clearRowSelection()">
+                 @click="resetFilters();;loadRows();clearRowSelection()">
             重置
           </q-btn>
         </div>
@@ -383,13 +372,10 @@ const clearRowSelection = () => {
 
         <div class="row full-width items-center justify-between">
 
-          <div v-if="pagination.count" class="col-auto row items-center">
+          <div v-if="rowSelection.length" class="col-auto row items-center">
 
             <div class="text-grey">{{ tc('选中') }}</div>
             <div class="">{{ rowSelection.length }}</div>
-            <div class="q-px-xs">/</div>
-            <div class="col-auto text-grey">{{ tc('搜索总计') }}</div>
-            <div class="col-auto ">{{ pagination.count }}</div>
 
           </div>
 
@@ -399,9 +385,10 @@ const clearRowSelection = () => {
               :disable="rowSelection.length === 0"
               class="col-auto"
               color="primary"
-              :label="tc('删除')"
+              :label="tc('导出为csv文件')"
               no-caps
               dense
+              @click="exportTable"
             />
           </div>
         </div>
@@ -418,146 +405,58 @@ const clearRowSelection = () => {
             <q-checkbox v-model="props.selected" dense size="xs"/>
           </q-td>
 
-          <q-td key="status" :props="props">
-            {{ props.row.status }}
-            <!--            <q-chip v-if="props.row.status === 'wait'"-->
-            <!--                    style="width: 80px;"-->
-            <!--                    color="primary"-->
-            <!--                    text-color="white"-->
-            <!--                    icon="more_horiz">-->
-            <!--              <div class="row justify-center">-->
-            <!--                {{ tc('待兑换') }}-->
-            <!--              </div>-->
-            <!--            </q-chip>-->
-
-            <!--            <q-chip v-if="props.row.status === 'available'"-->
-            <!--                    style="width: 80px;"-->
-            <!--                    color="light-green"-->
-            <!--                    text-color="white"-->
-            <!--                    icon="done">-->
-            <!--              <div class="row justify-center">-->
-            <!--                {{ tc('在用') }}-->
-            <!--              </div>-->
-            <!--            </q-chip>-->
-
-            <!--            <q-chip v-if="props.row.status === 'cancelled'"-->
-            <!--                    style="width: 80px;"-->
-            <!--                    color="red"-->
-            <!--                    text-color="white"-->
-            <!--                    icon="close">-->
-            <!--              <div class="row justify-center">-->
-            <!--                {{ tc('失效') }}-->
-            <!--              </div>-->
-            <!--            </q-chip>-->
-
-            <!--            <q-chip v-if="props.row.status === 'deleted'"-->
-            <!--                    style="width: 80px;"-->
-            <!--                    color="grey"-->
-            <!--                    text-color="white"-->
-            <!--                    icon="delete_forever">-->
-            <!--              <div class="row justify-center">-->
-            <!--                {{ tc('已删除') }}-->
-            <!--              </div>-->
-            <!--            </q-chip>-->
-          </q-td>
-
           <q-td key="id" :props="props">
             {{ props.row.id }}
           </q-td>
 
-          <q-td key="serviceNode" :props="props">
-            <div class="column items-center">
-
-              <q-icon
-                v-if="props.row.app_service?.category === 'vms-server'"
-                class="col"
-                name="computer"
-                color="primary"
-                size="md"
-              />
-
-              <q-icon
-                v-if="props.row.app_service?.category === 'vms-object'"
-                class="col"
-                name="mdi-database"
-                color="primary"
-                size="md"
-              />
-
-              <q-icon
-                v-if="props.row.app_service?.category === 'hpc'"
-                class="col"
-                name="mdi-rocket-launch"
-                color="primary"
-                size="md"
-              />
-
-              <q-icon
-                v-if="props.row.app_service?.category === 'high-cloud'"
-                class="col"
-                name="mdi-security"
-                color="primary"
-                size="md"
-              />
-
-              <q-icon
-                v-if="props.row.app_service?.category === 'other'"
-                class="col"
-                name="mdi-help-circle-outline"
-                color="primary"
-                size="md"
-              />
-
-              <div class="col">
-                {{ i18n.global.locale === 'zh' ? props.row.app_service?.name : props.row.app_service?.name_en }}
-              </div>
-            </div>
+          <q-td key="service_node" :props="props">
+            {{ props.row.app_service_id }}
           </q-td>
 
-          <q-td key="redeemer" :props="props">
-            {{ props.row.user?.username || tc('未知') }}
+          <q-td key="subject" :props="props">
+            {{ props.row.subject }}
           </q-td>
 
-          <q-td key="redeemTime" :props="props">
+          <q-td key="method" :props="props">
+            {{ props.row.payment_method }}
+          </q-td>
+
+          <q-td key="name" :props="props">
+            {{ props.row.payer_name }}
+          </q-td>
+
+          <q-td key="due_amount" :props="props">
+            {{ props.row.payable_amounts }}
+          </q-td>
+
+          <q-td key="balance_amount" :props="props">
+            {{ props.row.amounts }}
+          </q-td>
+
+          <q-td key="voucher_amount" :props="props">
+            {{ props.row.coupon_amount }}
+          </q-td>
+
+          <q-td key="success_time" :props="props">
             <div v-if="i18n.global.locale==='zh'">
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+              <div>{{ new Date(props.row.payment_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+              <div>{{ new Date(props.row.payment_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
             </div>
 
             <div v-else>
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+              <div>{{ new Date(props.row.payment_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+              <div>{{ new Date(props.row.payment_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
             </div>
           </q-td>
 
-          <q-td key="expirationTime" :props="props">
-            <div v-if="i18n.global.locale==='zh'">
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
-            </div>
-
-            <div v-else>
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
-            </div>
-          </q-td>
-
-          <q-td key="denomination" :props="props">
-            {{ props.row.face_value }} {{ tc('点', Number(props.row.face_value)) }}
-          </q-td>
-
-          <q-td key="balance" :props="props">
-            {{ props.row.balance }} {{ tc('点', Number(props.row.balance)) }}
+          <q-td key="status" :props="props">
+            {{ props.row.status }}
           </q-td>
 
           <q-td key="operation" :props="props">
             <q-btn flat dense no-caps color="primary">
-              删除
+              查看详情
             </q-btn>
-
-            <!--            <q-btn flat dense no-caps color="primary" @click="stopServer(props.row)">-->
-            <!--              关机-->
-            <!--            </q-btn>-->
           </q-td>
 
         </q-tr>
@@ -565,14 +464,14 @@ const clearRowSelection = () => {
 
       <template v-slot:bottom>
         <div class="row full-width items-center justify-end">
-          <div class="col row items-center justify-end text-grey">
+          <div class="col-auto row items-center justify-end text-grey">
             <q-select color="grey"
-                      v-model="pagination.rowsPerPage"
+                      v-model="pagination.page_size"
                       :options="[10,20,30,50,100]"
                       dense
                       options-dense
                       borderless
-                      @update:model-value="resetPageSelection();loadRows();clearRowSelection()">
+                      @update:model-value="loadRows();clearRowSelection()">
               <!--当前选项的内容插槽-->
               <!--                      <template v-slot:selected-item>-->
               <!--                            <span class="text-grey">-->
@@ -582,22 +481,31 @@ const clearRowSelection = () => {
             </q-select>
             项/页
           </div>
+          <q-btn color="primary"
+                 flat
+                 no-caps
+                 dense
+                 icon="chevron_left"
+                 :disable="pagination.prev === ''"
+                 @click="loadRows(pagination.prev)"/>
+          <q-btn color="primary"
+                 flat
+                 no-caps
+                 dense
+                 icon="navigate_next"
+                 :disable="!pagination.has_next"
+                 @click="loadRows(pagination.next)"/>
 
-          <q-pagination v-model="pagination.page"
-                        :max="Math.ceil(pagination.count / pagination.rowsPerPage )"
-                        :max-pages="9"
-                        direction-links
-                        outline
-                        :ripple="false"
-                        @update:model-value="loadRows();clearRowSelection()"
-          />
         </div>
+
+        {{ pagination }}
+
       </template>
     </q-table>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.VoucherList {
+.PersonalPayment {
 }
 </style>

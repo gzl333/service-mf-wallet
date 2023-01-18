@@ -109,6 +109,31 @@ export default {
       return axiosWallet.get('/cashcoupon/' + payload.path.id + '/payment', config)
     }
   },
+  'payment-history': {
+    getPaymentHistory (payload?: {
+      query?: {
+        marker?: string
+        page_size?: number
+        vo_id?: string
+        status?: string
+        time_start?: string
+        time_end?: string
+        app_service_id?: string
+      }
+    }) {
+      const config = {
+        params: payload?.query
+      }
+      return axiosWallet.get('/payment-history', config)
+    },
+    getPaymentHistoryId (payload: {
+      path: {
+        id: string
+      }
+    }) {
+      return axiosWallet.get('/payment-history/' + payload.path.id)
+    }
+  },
   service: {
     getService (payload?: {
       query?: {
