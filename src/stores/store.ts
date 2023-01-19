@@ -172,6 +172,10 @@ export interface AdminServiceTableInterface extends TotalTable, IdTable<ServiceI
 export interface AccountTableInterface extends TotalTable, IdTable<AccountInterface> {
 }
 
+// group account table
+export interface GroupAccountTableInterface extends TotalTable, IdTable<AccountInterface> {
+}
+
 /* 表的具体类型 */
 
 export const useStore = defineStore('wallet', {
@@ -200,6 +204,12 @@ export const useStore = defineStore('wallet', {
       } as AdminServiceTableInterface,
       // 全部账户：个人账户，项目组账户
       accountTable: {
+        byId: {},
+        allIds: [],
+        status: 'init'
+      } as AccountTableInterface,
+      // 全部项目组账户
+      groupAccountTable: {
         byId: {},
         allIds: [],
         status: 'init'
@@ -284,6 +294,9 @@ export const useStore = defineStore('wallet', {
       }
       if (this.tables.adminServiceTable.status === 'init') {
         void this.loadAdminServiceTable()
+      }
+      if (this.tables.groupAccountTable.status === 'init') {
+        void this.loadGroupAccountTable()
       }
     },
     // 加载全部service
@@ -411,6 +424,43 @@ export const useStore = defineStore('wallet', {
       } catch (exception) {
         exceptionNotifier(exception)
         this.tables.accountTable.status = 'error'
+      }
+    },
+    async loadGroupAccountTable () {
+      // clear
+      this.tables.groupAccountTable = {
+        byId: {},
+        allIds: [],
+        status: 'init'
+      }
+      // status
+      this.tables.groupAccountTable.status = 'loading'
+      // load
+      try {
+        // all group accounts
+        const respGroup = await api.wallet.vo.getVo()
+        for (const data of respGroup.data.results) {
+          // get group balance
+          const respGroupBalance = await api.wallet.account.getAccountBalanceVo({ path: { vo_id: data.id } })
+          // get group voucher count
+          const respGroupVoucher = await api.wallet.cashcoupon.getCashCoupon({ query: { vo_id: data.id } })
+          // 添加type/balance/voucher字段
+          Object.assign(data, {
+            balance: respGroupBalance.data.balance,
+            voucher: respGroupVoucher.data.count
+          })
+          // 保存table
+          Object.assign(this.tables.groupAccountTable.byId, { [data.id]: data })
+          this.tables.groupAccountTable.allIds.unshift(data.id)
+          this.tables.groupAccountTable.allIds = [...new Set(this.tables.groupAccountTable.allIds)]
+        }
+        // done all group accounts
+
+        // status
+        this.tables.groupAccountTable.status = 'total'
+      } catch (exception) {
+        exceptionNotifier(exception)
+        this.tables.groupAccountTable.status = 'error'
       }
     },
     /* tables */

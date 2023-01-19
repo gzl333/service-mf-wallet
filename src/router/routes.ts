@@ -32,7 +32,8 @@ const routes: RouteRecordRaw[] = [
           },
           {
             path: 'group',
-            component: () => import('pages/payment/GroupPayment.vue')
+            component: () => import('pages/payment/GroupPayment.vue'),
+            props: true
           }
         ]
       },
