@@ -24,7 +24,7 @@ const activeTab = ref(store.items.currentPath[1]) // keep selection when reloadi
 </script>
 
 <template>
-  <div class="AccountIndex">
+  <div class="VoucherIndex">
     <q-scroll-area style="height: calc(100vh - 60px);">
       <div class="column">
 
@@ -34,7 +34,7 @@ const activeTab = ref(store.items.currentPath[1]) // keep selection when reloadi
               <div class="row justify-between">
 
                 <div class="col-auto text-h6 q-pt-lg q-px-none">
-                  {{ tc('我的账户') }}
+                  {{ tc('代金券') }}
                 </div>
 
               </div>
@@ -52,21 +52,21 @@ const activeTab = ref(store.items.currentPath[1]) // keep selection when reloadi
                     <q-tab
                       no-caps
                       class="q-px-none q-py-md q-mr-md"
-                      name="list"
+                      name="personal"
                       icon="format_list_bulleted"
-                      :label="tc('账户列表')"
+                      :label="tc('个人代金券')"
                       :ripple="false"
-                      @click="activeTab = 'list'; navigateToUrl('/my/wallet/account/list')"
+                      @click="activeTab = 'personal'; navigateToUrl('/my/wallet/voucher/personal')"
                     />
-<!--                    <q-tab-->
-<!--                      no-caps-->
-<!--                      class="q-px-none q-py-md q-mr-md"-->
-<!--                      name="voucher"-->
-<!--                      icon="request_quote"-->
-<!--                      :label="tc('代金券')"-->
-<!--                      :ripple="false"-->
-<!--                      @click="activeTab = 'voucher'; navigateToUrl('/my/wallet/account/voucher')"-->
-<!--                    />-->
+                    <q-tab
+                      no-caps
+                      class="q-px-none q-py-md q-mr-md"
+                      name="group"
+                      icon="request_quote"
+                      :label="tc('项目组代金券')"
+                      :ripple="false"
+                      @click="activeTab = 'group'; navigateToUrl('/my/wallet/voucher/group')"
+                    />
                   </q-tabs>
                 </div>
 
@@ -98,6 +98,6 @@ const activeTab = ref(store.items.currentPath[1]) // keep selection when reloadi
 </template>
 
 <style lang="scss" scoped>
-.AccountIndex {
+.VoucherIndex {
 }
 </style>

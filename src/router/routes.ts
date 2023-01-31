@@ -14,10 +14,26 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'list',
             component: () => import('pages/account/AccountList.vue')
+          }
+          // {
+          //   path: 'voucher',
+          //   component: () => import('pages/account/VoucherList.vue')
+          // }
+        ]
+      },
+      {
+        path: 'voucher',
+        component: () => import('pages/voucher/VoucherIndex.vue'),
+        redirect: '/my/wallet/voucher/personal',
+        children: [
+          {
+            path: 'personal',
+            component: () => import('pages/voucher/PersonalVoucher.vue')
           },
           {
-            path: 'voucher',
-            component: () => import('pages/account/VoucherList.vue')
+            path: 'group',
+            component: () => import('pages/voucher/GroupVoucher.vue'),
+            props: true
           }
         ]
       },
