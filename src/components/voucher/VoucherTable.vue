@@ -1,67 +1,93 @@
 <script setup lang="ts">
-import { ref, computed, /* PropType, */ onMounted } from 'vue'
+import { ref, computed, watch, /*  PropType, */ onMounted } from 'vue'
 // import { navigateToUrl } from 'single-spa'
 import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
-// import { useQuasar } from 'quasar'
 import api from 'src/api'
+import { exportFile, Notify } from 'quasar'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 // import useCopyToClipboard from 'src/hooks/useCopyToClipboard'
 
 import type { VoucherInterface } from 'stores/store'
+import { type } from 'os'
 
-// const props = defineProps({
-//   foo: {
-//     type: String as PropType<'bar'>,
-//     required: false,
-//     default: ''
-//   }
-// })
+const props = defineProps({
+  isGroup: {
+    type: Boolean,
+    required: false,
+    default: false
+  },
+  groupId: {
+    type: String,
+    required: false
+  }
+})
 // const emits = defineEmits(['change', 'delete'])
 
 const { tc } = i18n.global
 const store = useStore()
 // const route = useRoute()
 // const router = useRouter()
-// const $q = useQuasar()
 const exceptionNotifier = useExceptionNotifier()
 // const clickToCopy = useCopyToClipboard()
+
+// 筛选项目组
+const groupSelection = ref('')
+// 项目组选项
+const groupOptions = computed(() => store.tables.groupAccountTable.allIds.map((accountId) => ({
+  value: accountId,
+  label: store.tables.groupAccountTable.byId[accountId].name
+})))
+
+// 项目组默认选择
+const chooseGroup = () => {
+  groupSelection.value = props.groupId || groupOptions.value[0]?.value || ''
+}
+// setup时调用一次 table已加载时，从别的页面进入本页面要选一次默认值
+if (store.tables.groupAccountTable.status === 'total') {
+  chooseGroup()
+}
 
 // 筛选服务单元
 const serviceOptions = computed(() => store.getServiceOptions('withAll'))
 const serviceSelection = ref('all')
 
 // 筛选服务类型
-// const typeOptions = computed(() => [
-//   {
-//     value: 'all',
-//     label: '所有服务类型',
-//     labelEn: 'All Types'
-//   },
-//   {
-//     value: 'vms-server',
-//     label: '云主机',
-//     labelEn: 'Cloud Server'
-//   },
-//   {
-//     value: 'vms-object',
-//     label: '对象存储',
-//     labelEn: 'Object Storage'
-//   },
-//   {
-//     value: 'high-cloud',
-//     label: '高等级云',
-//     labelEn: 'High Level Security Cloud'
-//   },
-//   {
-//     value: 'hpc',
-//     label: '高性能计算',
-//     labelEn: 'High Performance Computing'
-//   }
-// ])
-const typeSelection = ref('all')
+const typeOptions = computed(() => [
+  {
+    value: 'all',
+    label: '所有服务类型',
+    labelEn: 'All Types'
+  },
+  {
+    value: 'vms-server',
+    label: '云主机',
+    labelEn: 'Cloud Server'
+  },
+  {
+    value: 'vms-object',
+    label: '对象存储',
+    labelEn: 'Object Storage'
+  },
+  {
+    value: 'high-cloud',
+    label: '高等级云',
+    labelEn: 'High Level Security Cloud'
+  },
+  {
+    value: 'hpc',
+    label: '高性能计算',
+    labelEn: 'High Performance Computing'
+  },
+  {
+    value: 'other',
+    label: '其它',
+    labelEn: 'Others'
+  }
+])
+const typeSelection = ref<'all' | 'vms-server' | 'vms-object' | 'high-cloud' | 'hpc' | 'other'>('all')
 
 // 筛选账户
 // const accountOptions = computed(() => [
@@ -76,18 +102,18 @@ const typeSelection = ref('all')
 //     labelEn: 'Check one of the Groups'
 //   }
 // ])
-const accountSelection = ref('all')
+// const accountSelection = ref('all')
 
-// 筛选代金券状态
+// 筛选代金券有效期状态
 const statusOptions = computed(() => [
   {
     value: 'all',
-    label: '全部状态',
+    label: '全部有效期',
     labelEn: 'All Status'
   },
   {
     value: 'valid',
-    label: '有效',
+    label: '有效期内',
     labelEn: 'Valid'
   }
 ])
@@ -112,9 +138,11 @@ const resetPageSelection = () => {
 
 // 重置所有搜索条件
 const resetFilters = () => {
+  if (props.isGroup) {
+    chooseGroup()
+  }
   serviceSelection.value = 'all'
   typeSelection.value = 'all'
-  accountSelection.value = 'all'
   statusSelection.value = 'all'
 }
 
@@ -129,10 +157,12 @@ const loadRows = async () => {
         page: pagination.value.page,
         page_size: pagination.value.rowsPerPage,
         ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id }), // id -> pay_app_service_id
-        ...(statusSelection.value !== 'all' && { available: 'true' })
+        ...(props.isGroup && { vo_id: groupSelection.value }),
+        ...(statusSelection.value !== 'all' && { available: 'true' }),
+        ...(typeSelection.value !== 'all' && { app_service_category: typeSelection.value })
       }
     })
-    console.log(respGetVoucher.data.results)
+    // console.log(respGetVoucher.data.results)
     // 拿到rows值，给table用
     rows.value = respGetVoucher.data.results
     // pagination count
@@ -144,8 +174,19 @@ const loadRows = async () => {
   isLoading.value = false
 }
 
-// onMounted时加载初始table第一页
-onMounted(loadRows)
+// 刷新页面，table未加载时进入页面，根据table的加载状态变化一次都要选一次默认值
+if (store.tables.groupAccountTable.status === 'total') {
+  // 如果groupAccountTable已经加载，则使用当前group选项直接loadRows
+  onMounted(loadRows)
+} else {
+  // 否则根据groupOptions来chooseGroup
+  watch(groupOptions, () => {
+    if (store.tables.groupAccountTable.status === 'total') {
+      chooseGroup()
+      loadRows() // 读取当前项目组的rows
+    }
+  })
+}
 
 // table row hover
 const hoverRow = ref('')
@@ -160,7 +201,7 @@ const onMouseLeaveRow = () => {
 const columns = computed(() => [
   {
     name: 'status',
-    label: (() => tc('状态'))(),
+    label: (() => tc('兑换状态'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -240,7 +281,7 @@ const clearRowSelection = () => {
 </script>
 
 <template>
-  <div class="VoucherList">
+  <div class="VoucherTable">
     <div class=" column items-start justify-between q-mb-lg">
 
       <div class="col row full-width items-center justify-start q-pb-sm">
@@ -257,6 +298,31 @@ const clearRowSelection = () => {
         </div>
 
         <div class="col row q-gutter-x-md">
+
+          <q-select v-if="isGroup"
+                    class="col-auto"
+                    style="min-width: 170px;"
+                    label-color="primary"
+                    outlined
+                    dense
+                    stack-label
+                    :label="tc('筛选项目组账户')"
+                    v-model="groupSelection"
+                    :options="groupOptions"
+                    emit-value
+                    map-options
+                    option-value="value"
+                    option-label="label"
+                    :loading="groupSelection === ''"
+          >
+            <!--当前选项的内容插槽-->
+            <!--          <template v-slot:selected-item="scope">-->
+            <!--                <span :class="validSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
+            <!--                  {{ scope.opt.label }}-->
+            <!--                </span>-->
+            <!--          </template>-->
+          </q-select>
+
           <q-select class="col-auto"
                     style="min-width: 170px; max-width: 300px;"
                     :label-color="serviceSelection !== 'all' ? 'primary' : ''"
@@ -349,6 +415,28 @@ const clearRowSelection = () => {
             <!--          </template>-->
           </q-select>
 
+          <q-select class="col-auto"
+                    style="min-width: 170px;"
+                    :label-color="typeSelection !== 'all' ? 'primary' : ''"
+                    outlined
+                    dense
+                    stack-label
+                    :label="tc('筛选代金券种类')"
+                    v-model="typeSelection"
+                    :options="typeOptions"
+                    emit-value
+                    map-options
+                    option-value="value"
+                    :option-label="i18n.global.locale ==='zh'? 'label':'labelEn'"
+          >
+            <!--当前选项的内容插槽-->
+            <!--          <template v-slot:selected-item="scope">-->
+            <!--                <span :class="validSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
+            <!--                  {{ scope.opt.label }}-->
+            <!--                </span>-->
+            <!--          </template>-->
+          </q-select>
+
         </div>
 
       </div>
@@ -419,46 +507,45 @@ const clearRowSelection = () => {
           </q-td>
 
           <q-td key="status" :props="props">
-            {{ props.row.status }}
-            <!--            <q-chip v-if="props.row.status === 'wait'"-->
-            <!--                    style="width: 80px;"-->
-            <!--                    color="primary"-->
-            <!--                    text-color="white"-->
-            <!--                    icon="more_horiz">-->
-            <!--              <div class="row justify-center">-->
-            <!--                {{ tc('待兑换') }}-->
-            <!--              </div>-->
-            <!--            </q-chip>-->
+            <q-chip v-if="props.row.status === 'wait'"
+                    style="width: 80px;"
+                    color="primary"
+                    text-color="white"
+                    icon="more_horiz">
+              <div class="row justify-center">
+                {{ tc('待兑换') }}
+              </div>
+            </q-chip>
 
-            <!--            <q-chip v-if="props.row.status === 'available'"-->
-            <!--                    style="width: 80px;"-->
-            <!--                    color="light-green"-->
-            <!--                    text-color="white"-->
-            <!--                    icon="done">-->
-            <!--              <div class="row justify-center">-->
-            <!--                {{ tc('在用') }}-->
-            <!--              </div>-->
-            <!--            </q-chip>-->
+            <q-chip v-if="props.row.status === 'available'"
+                    style="width: 80px;"
+                    color="light-green"
+                    text-color="white"
+                    icon="done">
+              <div class="row justify-center">
+                {{ tc('已兑换') }}
+              </div>
+            </q-chip>
 
-            <!--            <q-chip v-if="props.row.status === 'cancelled'"-->
-            <!--                    style="width: 80px;"-->
-            <!--                    color="red"-->
-            <!--                    text-color="white"-->
-            <!--                    icon="close">-->
-            <!--              <div class="row justify-center">-->
-            <!--                {{ tc('失效') }}-->
-            <!--              </div>-->
-            <!--            </q-chip>-->
+            <q-chip v-if="props.row.status === 'cancelled'"
+                    style="width: 80px;"
+                    color="red"
+                    text-color="white"
+                    icon="close">
+              <div class="row justify-center">
+                {{ tc('已取消') }}
+              </div>
+            </q-chip>
 
-            <!--            <q-chip v-if="props.row.status === 'deleted'"-->
-            <!--                    style="width: 80px;"-->
-            <!--                    color="grey"-->
-            <!--                    text-color="white"-->
-            <!--                    icon="delete_forever">-->
-            <!--              <div class="row justify-center">-->
-            <!--                {{ tc('已删除') }}-->
-            <!--              </div>-->
-            <!--            </q-chip>-->
+            <q-chip v-if="props.row.status === 'deleted'"
+                    style="width: 80px;"
+                    color="grey"
+                    text-color="white"
+                    icon="delete_forever">
+              <div class="row justify-center">
+                {{ tc('已删除') }}
+              </div>
+            </q-chip>
           </q-td>
 
           <q-td key="id" :props="props">
@@ -598,6 +685,6 @@ const clearRowSelection = () => {
 </template>
 
 <style lang="scss" scoped>
-.VoucherList {
+.VoucherTable {
 }
 </style>

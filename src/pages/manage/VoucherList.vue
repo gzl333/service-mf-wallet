@@ -62,12 +62,12 @@ const statusOptions = computed(() => [
   },
   {
     value: 'available',
-    label: '在用',
+    label: '已兑换',
     labelEn: 'Redeemed'
   },
   {
     value: 'cancelled',
-    label: '失效',
+    label: '已取消',
     labelEn: 'Invalid'
   },
   {
@@ -128,7 +128,7 @@ onMounted(loadRows)
 const columns = computed(() => [
   {
     name: 'status',
-    label: (() => tc('状态'))(),
+    label: (() => tc('兑换状态'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -483,7 +483,7 @@ const exportTable = () => {
                     text-color="white"
                     icon="done">
               <div class="row justify-center">
-                {{ tc('在用') }}
+                {{ tc('已兑换') }}
               </div>
             </q-chip>
 
@@ -493,7 +493,7 @@ const exportTable = () => {
                     text-color="white"
                     icon="close">
               <div class="row justify-center">
-                {{ tc('失效') }}
+                {{ tc('已取消') }}
               </div>
             </q-chip>
 

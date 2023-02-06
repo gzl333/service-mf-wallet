@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, watch, /*  PropType, */ onMounted } from 'vue'
 // import { navigateToUrl } from 'single-spa'
-import { PaymentInterface, useStore } from 'stores/store'
+import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
-import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 import api from 'src/api'
 import { exportFile, Notify } from 'quasar'
+
+import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 // import useCopyToClipboard from 'src/hooks/useCopyToClipboard'
+
+import type { PaymentInterface } from 'stores/store'
 
 const props = defineProps({
   isGroup: {

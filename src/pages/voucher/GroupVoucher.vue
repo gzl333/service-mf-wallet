@@ -5,6 +5,8 @@
 // import { useRoute, useRouter } from 'vue-router'
 // import { i18n } from 'boot/i18n'
 
+import VoucherTable from 'components/voucher/VoucherTable.vue'
+
 // const props = defineProps({
 //   foo: {
 //     type: String as PropType<'bar'>,
@@ -23,7 +25,7 @@
 
 <template>
   <div class="GroupVoucher">
-    this is GroupVoucher
+    <VoucherTable :is-group="true"/>
   </div>
 </template>
 
