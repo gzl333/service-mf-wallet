@@ -5,13 +5,12 @@ import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
 import api from 'src/api'
-import { exportFile, Notify } from 'quasar'
+// import { exportFile, Notify } from 'quasar'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 // import useCopyToClipboard from 'src/hooks/useCopyToClipboard'
 
 import type { VoucherInterface } from 'stores/store'
-import { type } from 'os'
 
 const props = defineProps({
   isGroup: {

@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 // import { i18n } from 'boot/i18n'
 import api from 'src/api'
-// @ts-expect-error
-import { useStoreMain } from '@cnic/main'
+// // @ts-expect-error
+// import { useStoreMain } from '@cnic/main'
 import { Dialog } from 'quasar'
 
 import CreateVoucherDialog from 'components/manage/CreateVoucherDialog.vue'
@@ -186,7 +186,10 @@ export const useStore = defineStore('wallet', {
       currentPath: [] as string[],
       // 账户在vms内的身份
       fedRole: '' as 'ordinary' | 'federal-admin', // 联邦层级：普通用户还是管理员
-      adminServiceIds: [] as string[] // 有vms管理员权限的接入服务id
+      adminServiceIds: [] as string[], // 有vms管理员权限的接入服务id
+      // personal account
+      personalBalance: 0,
+      personalVoucherCount: 0
     },
     tables: {
       /* 整体加载表：一旦加载则全部加载 */
@@ -272,12 +275,25 @@ export const useStore = defineStore('wallet', {
     /* items */
     async loadAllItems () {
       void this.loadServerRole()
+      void this.loadPersonalAccount()
     },
     async loadServerRole () {
       try {
         const respGetUserPermissionPolicy = await api.wallet.user.getUserPermissionPolicy()
         this.items.fedRole = respGetUserPermissionPolicy.data.role
         this.items.adminServiceIds = respGetUserPermissionPolicy.data.vms.service_ids
+      } catch (exception) {
+        exceptionNotifier(exception)
+      }
+    },
+    async loadPersonalAccount () {
+      try {
+        // get personal balance
+        const respPersonalBalance = await api.wallet.account.getAccountBalanceUser()
+        this.items.personalBalance = respPersonalBalance.data.balance
+        // get personal voucher count
+        const respPersonalVoucher = await api.wallet.cashcoupon.getCashCoupon()
+        this.items.personalVoucherCount = respPersonalVoucher.data.count
       } catch (exception) {
         exceptionNotifier(exception)
       }
@@ -365,39 +381,39 @@ export const useStore = defineStore('wallet', {
       this.tables.accountTable.status = 'loading'
       // load
       try {
-        // personal account
-        const storeMain = useStoreMain()
-        const personalAccount = {
-          id: storeMain.items.tokenDecoded.email,
-          name: storeMain.items.tokenDecoded.email,
-          company: '',
-          description: '',
-          creation_time: '',
-          owner: {
-            id: storeMain.items.tokenDecoded.email,
-            username: storeMain.items.tokenDecoded.email
-          },
-          status: 'active',
-
-          // 补充字段
-          type: 'personal',
-          balance: 0,
-          voucher: 0
-        }
-
-        // get personal balance
-        const respPersonalBalance = await api.wallet.account.getAccountBalanceUser()
-        personalAccount.balance = respPersonalBalance.data.balance
-
-        // get personal voucher count
-        const respPersonalVoucher = await api.wallet.cashcoupon.getCashCoupon()
-        personalAccount.voucher = respPersonalVoucher.data.count
-
-        // add personal account to accountTable
-        Object.assign(this.tables.accountTable.byId, { personal: personalAccount })
-        this.tables.accountTable.allIds.unshift('personal')
-        this.tables.accountTable.allIds = [...new Set(this.tables.accountTable.allIds)]
-        // done personal account
+        // // personal account
+        // const storeMain = useStoreMain()
+        // const personalAccount = {
+        //   id: storeMain.items.tokenDecoded.email,
+        //   name: storeMain.items.tokenDecoded.email,
+        //   company: '',
+        //   description: '',
+        //   creation_time: '',
+        //   owner: {
+        //     id: storeMain.items.tokenDecoded.email,
+        //     username: storeMain.items.tokenDecoded.email
+        //   },
+        //   status: 'active',
+        //
+        //   // 补充字段
+        //   type: 'personal',
+        //   balance: 0,
+        //   voucher: 0
+        // }
+        //
+        // // get personal balance
+        // const respPersonalBalance = await api.wallet.account.getAccountBalanceUser()
+        // personalAccount.balance = respPersonalBalance.data.balance
+        //
+        // // get personal voucher count
+        // const respPersonalVoucher = await api.wallet.cashcoupon.getCashCoupon()
+        // personalAccount.voucher = respPersonalVoucher.data.count
+        //
+        // // add personal account to accountTable
+        // Object.assign(this.tables.accountTable.byId, { personal: personalAccount })
+        // this.tables.accountTable.allIds.unshift('personal')
+        // this.tables.accountTable.allIds = [...new Set(this.tables.accountTable.allIds)]
+        // // done personal account
 
         // all group accounts
         const respGroup = await api.wallet.vo.getVo()
