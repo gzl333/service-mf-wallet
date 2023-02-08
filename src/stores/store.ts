@@ -205,12 +205,12 @@ export const useStore = defineStore('wallet', {
         allIds: [],
         status: 'init'
       } as AdminServiceTableInterface,
-      // 全部账户：个人账户，项目组账户
-      accountTable: {
-        byId: {},
-        allIds: [],
-        status: 'init'
-      } as AccountTableInterface,
+      // // 全部账户：个人账户，项目组账户
+      // accountTable: {
+      //   byId: {},
+      //   allIds: [],
+      //   status: 'init'
+      // } as AccountTableInterface,
       // 全部项目组账户
       groupAccountTable: {
         byId: {},
@@ -302,9 +302,9 @@ export const useStore = defineStore('wallet', {
 
     /* tables */
     loadTotalTables () {
-      if (this.tables.accountTable.status === 'init') {
-        void this.loadAccountTable()
-      }
+      // if (this.tables.accountTable.status === 'init') {
+      //   void this.loadAccountTable()
+      // }
       if (this.tables.serviceTable.status === 'init') {
         void this.loadServiceTable()
       }
@@ -370,78 +370,78 @@ export const useStore = defineStore('wallet', {
       }
     },
     // 加载用户相关全部账户，包括个人账户、项目组账户
-    async loadAccountTable () {
-      // clear
-      this.tables.accountTable = {
-        byId: {},
-        allIds: [],
-        status: 'init'
-      }
-      // status
-      this.tables.accountTable.status = 'loading'
-      // load
-      try {
-        // // personal account
-        // const storeMain = useStoreMain()
-        // const personalAccount = {
-        //   id: storeMain.items.tokenDecoded.email,
-        //   name: storeMain.items.tokenDecoded.email,
-        //   company: '',
-        //   description: '',
-        //   creation_time: '',
-        //   owner: {
-        //     id: storeMain.items.tokenDecoded.email,
-        //     username: storeMain.items.tokenDecoded.email
-        //   },
-        //   status: 'active',
-        //
-        //   // 补充字段
-        //   type: 'personal',
-        //   balance: 0,
-        //   voucher: 0
-        // }
-        //
-        // // get personal balance
-        // const respPersonalBalance = await api.wallet.account.getAccountBalanceUser()
-        // personalAccount.balance = respPersonalBalance.data.balance
-        //
-        // // get personal voucher count
-        // const respPersonalVoucher = await api.wallet.cashcoupon.getCashCoupon()
-        // personalAccount.voucher = respPersonalVoucher.data.count
-        //
-        // // add personal account to accountTable
-        // Object.assign(this.tables.accountTable.byId, { personal: personalAccount })
-        // this.tables.accountTable.allIds.unshift('personal')
-        // this.tables.accountTable.allIds = [...new Set(this.tables.accountTable.allIds)]
-        // // done personal account
-
-        // all group accounts
-        const respGroup = await api.wallet.vo.getVo()
-        for (const data of respGroup.data.results) {
-          // get group balance
-          const respGroupBalance = await api.wallet.account.getAccountBalanceVo({ path: { vo_id: data.id } })
-          // get group voucher count
-          const respGroupVoucher = await api.wallet.cashcoupon.getCashCoupon({ query: { vo_id: data.id } })
-          // 添加type/balance/voucher字段
-          Object.assign(data, {
-            type: 'group',
-            balance: respGroupBalance.data.balance,
-            voucher: respGroupVoucher.data.count
-          })
-          // 保存table
-          Object.assign(this.tables.accountTable.byId, { [data.id]: data })
-          this.tables.accountTable.allIds.unshift(data.id)
-          this.tables.accountTable.allIds = [...new Set(this.tables.accountTable.allIds)]
-        }
-        // done all group accounts
-
-        // status
-        this.tables.accountTable.status = 'total'
-      } catch (exception) {
-        exceptionNotifier(exception)
-        this.tables.accountTable.status = 'error'
-      }
-    },
+    // async loadAccountTable () {
+    //   // clear
+    //   this.tables.accountTable = {
+    //     byId: {},
+    //     allIds: [],
+    //     status: 'init'
+    //   }
+    //   // status
+    //   this.tables.accountTable.status = 'loading'
+    //   // load
+    //   try {
+    //     // personal account
+    //     const storeMain = useStoreMain()
+    //     const personalAccount = {
+    //       id: storeMain.items.tokenDecoded.email,
+    //       name: storeMain.items.tokenDecoded.email,
+    //       company: '',
+    //       description: '',
+    //       creation_time: '',
+    //       owner: {
+    //         id: storeMain.items.tokenDecoded.email,
+    //         username: storeMain.items.tokenDecoded.email
+    //       },
+    //       status: 'active',
+    //
+    //       // 补充字段
+    //       type: 'personal',
+    //       balance: 0,
+    //       voucher: 0
+    //     }
+    //
+    //     // get personal balance
+    //     const respPersonalBalance = await api.wallet.account.getAccountBalanceUser()
+    //     personalAccount.balance = respPersonalBalance.data.balance
+    //
+    //     // get personal voucher count
+    //     const respPersonalVoucher = await api.wallet.cashcoupon.getCashCoupon()
+    //     personalAccount.voucher = respPersonalVoucher.data.count
+    //
+    //     // add personal account to accountTable
+    //     Object.assign(this.tables.accountTable.byId, { personal: personalAccount })
+    //     this.tables.accountTable.allIds.unshift('personal')
+    //     this.tables.accountTable.allIds = [...new Set(this.tables.accountTable.allIds)]
+    //     // done personal account
+    //
+    //     // all group accounts
+    //     const respGroup = await api.wallet.vo.getVo()
+    //     for (const data of respGroup.data.results) {
+    //       // get group balance
+    //       const respGroupBalance = await api.wallet.account.getAccountBalanceVo({ path: { vo_id: data.id } })
+    //       // get group voucher count
+    //       const respGroupVoucher = await api.wallet.cashcoupon.getCashCoupon({ query: { vo_id: data.id } })
+    //       // 添加type/balance/voucher字段
+    //       Object.assign(data, {
+    //         type: 'group',
+    //         balance: respGroupBalance.data.balance,
+    //         voucher: respGroupVoucher.data.count
+    //       })
+    //       // 保存table
+    //       Object.assign(this.tables.accountTable.byId, { [data.id]: data })
+    //       this.tables.accountTable.allIds.unshift(data.id)
+    //       this.tables.accountTable.allIds = [...new Set(this.tables.accountTable.allIds)]
+    //     }
+    //     // done all group accounts
+    //
+    //     // status
+    //     this.tables.accountTable.status = 'total'
+    //   } catch (exception) {
+    //     exceptionNotifier(exception)
+    //     this.tables.accountTable.status = 'error'
+    //   }
+    // },
     async loadGroupAccountTable () {
       // clear
       this.tables.groupAccountTable = {
