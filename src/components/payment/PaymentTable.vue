@@ -63,7 +63,7 @@ watch(groupOptions, () => {
 onMounted(() => (loadRows('first')))
 
 // 筛选服务单元
-const serviceOptions = computed(() => store.getServiceOptions('withAll'))
+const serviceOptions = computed(() => store.getAppServiceOptions(false, true))
 const serviceSelection = ref('all')
 
 // 筛选支付状态
@@ -81,16 +81,16 @@ const statusOptions = [
   {
     value: 'success',
     label: '支付成功',
-    labelEn: 'Succeeded'
+    labelEn: 'Successful'
   },
   {
     value: 'error',
-    label: '等待支付',
+    label: '支付失败',
     labelEn: 'Failed'
   },
   {
     value: 'closed',
-    label: '等待支付',
+    label: '支付关闭',
     labelEn: 'Closed'
   }
 ]
@@ -144,7 +144,7 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
           ...(statusSelection.value !== 'all' && { status: statusSelection.value }),
           ...(startTime.value !== '' && { time_start: startTime.value }),
           ...(endTime.value !== '' && { time_end: endTime.value }),
-          ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id }) // id -> pay_app_service_id
+          ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id })
         }
       })
       // console.log(respGetPayment.data.results)
@@ -181,7 +181,7 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
             ...(statusSelection.value !== 'all' && { status: statusSelection.value }),
             ...(startTime.value !== '' && { time_start: startTime.value }),
             ...(endTime.value !== '' && { time_end: endTime.value }),
-            ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id }) // id -> pay_app_service_id
+            ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id })
           }
         })
         // console.log(respGetPayment.data)
@@ -220,7 +220,7 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
             ...(statusSelection.value !== 'all' && { status: statusSelection.value }),
             ...(startTime.value !== '' && { time_start: startTime.value }),
             ...(endTime.value !== '' && { time_end: endTime.value }),
-            ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id }) // id -> pay_app_service_id
+            ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id }) // id -> pay_app_service_id
           }
         })
         // console.log(respGetPayment.data)
@@ -460,44 +460,64 @@ const exportTable = () => {
 
             <template v-slot:option="scope">
               <q-item v-bind="scope.itemProps">
-                <q-tooltip>
-                  <div v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'">
-                    服务单元运行中
-                  </div>
-                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'">
-                    服务单元暂停服务
-                  </div>
-                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'">
-                    服务单元已删除
-                  </div>
-                  <div v-else>
-                    全部服务单元
-                  </div>
-                </q-tooltip>
-                <q-item-section thumbnail>
-                  <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'"
-                          color="light-green"
-                          name="play_arrow"/>
-                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'"
-                          color="red"
-                          name="pause"/>
-                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'"
-                          color="black"
-                          name="clear"/>
-                  <q-icon v-else color="primary" name="done_all"/>
-                </q-item-section>
+                <!--                <q-tooltip>-->
+                <!--                  <div v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'">-->
+                <!--                    服务单元运行中-->
+                <!--                  </div>-->
+                <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'">-->
+                <!--                    服务单元暂停服务-->
+                <!--                  </div>-->
+                <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'">-->
+                <!--                    服务单元已删除-->
+                <!--                  </div>-->
+                <!--                  <div v-else>-->
+                <!--                    全部服务单元-->
+                <!--                  </div>-->
+                <!--                </q-tooltip>-->
+                <!--                <q-item-section thumbnail>-->
+                <!--                  <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'"-->
+                <!--                          color="light-green"-->
+                <!--                          name="play_arrow"/>-->
+                <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'"-->
+                <!--                          color="red"-->
+                <!--                          name="pause"/>-->
+                <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'"-->
+                <!--                          color="black"-->
+                <!--                          name="clear"/>-->
+                <!--                  <q-icon v-else color="primary" name="done_all"/>-->
+                <!--                </q-item-section>-->
                 <q-item-section>
                   <q-item-label class="row items-center">
-                    <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.pay_app_service_type === 'server'"
+                    <q-icon v-if="scope.opt.value === 'all'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-check-all"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-server'"
                             class="col-auto"
                             color="primary"
                             size="sm"
                             name="computer"/>
-                    <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.pay_app_service_type === 'storage'"
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-object'"
                             class="col-auto"
                             color="primary"
                             size="sm"
                             name="mdi-database"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'high-cloud'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-security"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'hpc'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-rocket-launch"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'other'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-help-circle-outline"/>
                     <div class="col-auto">
                       {{ i18n.global.locale === 'zh' ? scope.opt.label : scope.opt.labelEn }}
                     </div>
@@ -609,7 +629,56 @@ const exportTable = () => {
           </q-td>
 
           <q-td key="service_node" :props="props">
-            {{ props.row.app_service_id }}
+            <div class="column items-center">
+
+              <q-icon
+                v-if="store.tables.appServiceTable.byId[props.row.app_service_id]?.category === 'vms-server'"
+                class="col"
+                name="computer"
+                color="primary"
+                size="md"
+              />
+
+              <q-icon
+                v-if="store.tables.appServiceTable.byId[props.row.app_service_id]?.category === 'vms-object'"
+                class="col"
+                name="mdi-database"
+                color="primary"
+                size="md"
+              />
+
+              <q-icon
+                v-if="store.tables.appServiceTable.byId[props.row.app_service_id]?.category === 'hpc'"
+                class="col"
+                name="mdi-rocket-launch"
+                color="primary"
+                size="md"
+              />
+
+              <q-icon
+                v-if="store.tables.appServiceTable.byId[props.row.app_service_id]?.category === 'high-cloud'"
+                class="col"
+                name="mdi-security"
+                color="primary"
+                size="md"
+              />
+
+              <q-icon
+                v-if="store.tables.appServiceTable.byId[props.row.app_service_id]?.category === 'other'"
+                class="col"
+                name="mdi-help-circle-outline"
+                color="primary"
+                size="md"
+              />
+
+              <div class="col">
+                {{
+                  i18n.global.locale === 'zh' ?
+                    store.tables.appServiceTable.byId[props.row.app_service_id]?.name :
+                    store.tables.appServiceTable.byId[props.row.app_service_id]?.name_en
+                }}
+              </div>
+            </div>
           </q-td>
 
           <q-td key="subject" :props="props">

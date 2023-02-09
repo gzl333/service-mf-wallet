@@ -50,7 +50,7 @@ if (store.tables.groupAccountTable.status === 'total') {
 }
 
 // 筛选服务单元
-const serviceOptions = computed(() => store.getServiceOptions('withAll'))
+const serviceOptions = computed(() => store.getAppServiceOptions(false, true))
 const serviceSelection = ref('all')
 
 // 筛选服务类型
@@ -155,7 +155,7 @@ const loadRows = async () => {
       query: {
         page: pagination.value.page,
         page_size: pagination.value.rowsPerPage,
-        ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id }), // id -> pay_app_service_id
+        ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id }),
         ...(props.isGroup && { vo_id: groupSelection.value }),
         ...(statusSelection.value !== 'all' && { available: 'true' }),
         ...(typeSelection.value !== 'all' && { app_service_category: typeSelection.value })
@@ -344,44 +344,64 @@ const clearRowSelection = () => {
 
             <template v-slot:option="scope">
               <q-item v-bind="scope.itemProps">
-                <q-tooltip>
-                  <div v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'">
-                    服务单元运行中
-                  </div>
-                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'">
-                    服务单元暂停服务
-                  </div>
-                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'">
-                    服务单元已删除
-                  </div>
-                  <div v-else>
-                    全部服务单元
-                  </div>
-                </q-tooltip>
-                <q-item-section thumbnail>
-                  <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'"
-                          color="light-green"
-                          name="play_arrow"/>
-                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'"
-                          color="red"
-                          name="pause"/>
-                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'"
-                          color="black"
-                          name="clear"/>
-                  <q-icon v-else color="primary" name="done_all"/>
-                </q-item-section>
+                <!--                <q-tooltip>-->
+                <!--                  <div v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'">-->
+                <!--                    服务单元运行中-->
+                <!--                  </div>-->
+                <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'">-->
+                <!--                    服务单元暂停服务-->
+                <!--                  </div>-->
+                <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'">-->
+                <!--                    服务单元已删除-->
+                <!--                  </div>-->
+                <!--                  <div v-else>-->
+                <!--                    全部服务单元-->
+                <!--                  </div>-->
+                <!--                </q-tooltip>-->
+                <!--                <q-item-section thumbnail>-->
+                <!--                  <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'"-->
+                <!--                          color="light-green"-->
+                <!--                          name="play_arrow"/>-->
+                <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'"-->
+                <!--                          color="red"-->
+                <!--                          name="pause"/>-->
+                <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'"-->
+                <!--                          color="black"-->
+                <!--                          name="clear"/>-->
+                <!--                  <q-icon v-else color="primary" name="done_all"/>-->
+                <!--                </q-item-section>-->
                 <q-item-section>
                   <q-item-label class="row items-center">
-                    <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.pay_app_service_type === 'server'"
+                    <q-icon v-if="scope.opt.value === 'all'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-check-all"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-server'"
                             class="col-auto"
                             color="primary"
                             size="sm"
                             name="computer"/>
-                    <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.pay_app_service_type === 'storage'"
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-object'"
                             class="col-auto"
                             color="primary"
                             size="sm"
                             name="mdi-database"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'high-cloud'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-security"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'hpc'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-rocket-launch"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'other'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-help-circle-outline"/>
                     <div class="col-auto">
                       {{ i18n.global.locale === 'zh' ? scope.opt.label : scope.opt.labelEn }}
                     </div>

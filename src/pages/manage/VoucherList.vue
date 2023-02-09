@@ -45,7 +45,7 @@ const isLoading = ref(false)
 const rows = ref<VoucherInterface[]>()
 
 // 筛选服务单元
-const serviceOptions = computed(() => store.getServiceOptions('withAll'))
+const serviceOptions = computed(() => store.getAppServiceOptions(true, true))
 const serviceSelection = ref('all')
 
 // 筛选代金券状态
@@ -88,7 +88,7 @@ const loadRows = async () => {
       query: {
         page: pagination.value.page,
         page_size: pagination.value.rowsPerPage,
-        ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id }), // id -> pay_app_service_id
+        ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id }), // id -> pay_app_service_id
         ...(statusSelection.value !== 'all' && { status: statusSelection.value })
       }
     })
@@ -147,17 +147,17 @@ const columns = computed(() => [
     label: (() => tc('服务单元'))(),
     align: 'center',
     classes: 'ellipsis',
-    style: 'padding: 15px 0px; min-width: 150px; max-width: 200px; word-break: break-all; word-wrap: break-word; white-space: normal;',
+    style: 'padding: 15px 0px; min-width: 150px; max-width: 250px; word-break: break-all; word-wrap: break-word; white-space: normal;',
     headerStyle: 'padding: 0 2px'
   },
-  {
-    name: 'resourceType',
-    label: (() => tc('资源种类'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    headerStyle: 'padding: 0 0 0 1px',
-    style: 'padding: 15px 0px; min-width: 80px; max-width: 100px; word-break: break-all; word-wrap: break-word; white-space: normal;'
-  },
+  // {
+  //   name: 'resourceType',
+  //   label: (() => tc('资源种类'))(),
+  //   align: 'center',
+  //   classes: 'ellipsis',
+  //   headerStyle: 'padding: 0 0 0 1px',
+  //   style: 'padding: 15px 0px; min-width: 80px; max-width: 100px; word-break: break-all; word-wrap: break-word; white-space: normal;'
+  // },
   {
     name: 'redeemer',
     label: (() => tc('兑换者'))(),
@@ -312,44 +312,64 @@ const exportTable = () => {
 
             <template v-slot:option="scope">
               <q-item v-bind="scope.itemProps">
-                <q-tooltip>
-                  <div v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'">
-                    服务单元运行中
-                  </div>
-                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'">
-                    服务单元暂停服务
-                  </div>
-                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'">
-                    服务单元已删除
-                  </div>
-                  <div v-else>
-                    全部服务单元
-                  </div>
-                </q-tooltip>
-                <q-item-section thumbnail>
-                  <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'"
-                          color="light-green"
-                          name="play_arrow"/>
-                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'"
-                          color="red"
-                          name="pause"/>
-                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'"
-                          color="black"
-                          name="clear"/>
-                  <q-icon v-else color="primary" name="done_all"/>
-                </q-item-section>
+                <!--                <q-tooltip>-->
+                <!--                  <div v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'">-->
+                <!--                    服务单元运行中-->
+                <!--                  </div>-->
+                <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'">-->
+                <!--                    服务单元暂停服务-->
+                <!--                  </div>-->
+                <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'">-->
+                <!--                    服务单元已删除-->
+                <!--                  </div>-->
+                <!--                  <div v-else>-->
+                <!--                    全部服务单元-->
+                <!--                  </div>-->
+                <!--                </q-tooltip>-->
+                <!--                <q-item-section thumbnail>-->
+                <!--                  <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'"-->
+                <!--                          color="light-green"-->
+                <!--                          name="play_arrow"/>-->
+                <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'"-->
+                <!--                          color="red"-->
+                <!--                          name="pause"/>-->
+                <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'"-->
+                <!--                          color="black"-->
+                <!--                          name="clear"/>-->
+                <!--                  <q-icon v-else color="primary" name="done_all"/>-->
+                <!--                </q-item-section>-->
                 <q-item-section>
                   <q-item-label class="row items-center">
-                    <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.pay_app_service_type === 'server'"
+                    <q-icon v-if="scope.opt.value === 'all'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-check-all"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-server'"
                             class="col-auto"
                             color="primary"
                             size="sm"
                             name="computer"/>
-                    <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.pay_app_service_type === 'storage'"
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-object'"
                             class="col-auto"
                             color="primary"
                             size="sm"
                             name="mdi-database"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'high-cloud'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-security"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'hpc'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-rocket-launch"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'other'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-help-circle-outline"/>
                     <div class="col-auto">
                       {{ i18n.global.locale === 'zh' ? scope.opt.label : scope.opt.labelEn }}
                     </div>
@@ -513,82 +533,158 @@ const exportTable = () => {
           </q-td>
 
           <q-td key="serviceNode" :props="props">
-            {{ i18n.global.locale === 'zh' ? props.row.app_service?.name : props.row.app_service?.name_en }}
+
+            <div class="column items-center">
+
+              <div v-if="props.row.app_service?.category === 'vms-server'"
+                   class="column items-center">
+                <q-icon
+                  class="col"
+                  name="computer"
+                  color="primary"
+                  size="md"
+                />
+                <div class="col">
+                  {{ tc('云主机') }}
+                </div>
+              </div>
+
+              <div v-if="props.row.app_service?.category === 'vms-object'"
+                   class="column items-center">
+                <q-icon
+                  class="col"
+                  name="mdi-database"
+                  color="primary"
+                  size="md"
+                />
+                <div class="col">
+                  {{ tc('对象存储') }}
+                </div>
+              </div>
+
+              <div v-if="props.row.app_service?.category === 'hpc'"
+                   class="column items-center">
+                <q-icon
+                  class="col"
+                  name="mdi-rocket-launch"
+                  color="primary"
+                  size="md"
+                />
+                <div class="col">
+                  {{ tc('高性能计算') }}
+                </div>
+              </div>
+
+              <div v-if="props.row.app_service?.category === 'high-cloud'"
+                   class="column items-center">
+                <q-icon
+                  class="col"
+                  name="mdi-security"
+                  color="primary"
+                  size="md"
+                />
+                <div class="col">
+                  {{ tc('高等级云') }}
+                </div>
+              </div>
+
+              <div v-if="props.row.app_service?.category === 'other'"
+                   class="column items-center">
+                <q-icon
+                  class="col"
+                  name="mdi-help-circle-outline"
+                  color="primary"
+                  size="md"
+                />
+                <div class="col">
+                  {{ tc('其它资源') }}
+                </div>
+              </div>
+
+              <div class="col">
+                {{
+                  i18n.global.locale === 'zh' ?
+                    props.row.app_service?.name :
+                    props.row.app_service?.name_en
+                }}
+              </div>
+            </div>
+
           </q-td>
 
-          <q-td key="resourceType" :props="props">
+          <!--          <q-td key="resourceType" :props="props">-->
 
-            <div v-if="props.row.app_service?.category === 'vms-server'"
-                 class="column items-center"
-            >
-              <q-icon
-                class="col"
-                name="computer"
-                color="primary"
-                size="md"
-              />
-              <div class="col">
-                {{ tc('云主机') }}
-              </div>
-            </div>
+          <!--            <div v-if="props.row.app_service?.category === 'vms-server'"-->
+          <!--                 class="column items-center"-->
+          <!--            >-->
+          <!--              <q-icon-->
+          <!--                class="col"-->
+          <!--                name="computer"-->
+          <!--                color="primary"-->
+          <!--                size="md"-->
+          <!--              />-->
+          <!--              <div class="col">-->
+          <!--                {{ tc('云主机') }}-->
+          <!--              </div>-->
+          <!--            </div>-->
 
-            <div v-if="props.row.app_service?.category === 'vms-object'"
-                 class="column items-center"
-            >
-              <q-icon
-                class="col"
-                name="mdi-database"
-                color="primary"
-                size="md"
-              />
-              <div class="col">
-                {{ tc('对象存储') }}
-              </div>
-            </div>
+          <!--            <div v-if="props.row.app_service?.category === 'vms-object'"-->
+          <!--                 class="column items-center"-->
+          <!--            >-->
+          <!--              <q-icon-->
+          <!--                class="col"-->
+          <!--                name="mdi-database"-->
+          <!--                color="primary"-->
+          <!--                size="md"-->
+          <!--              />-->
+          <!--              <div class="col">-->
+          <!--                {{ tc('对象存储') }}-->
+          <!--              </div>-->
+          <!--            </div>-->
 
-            <div v-if="props.row.app_service?.category === 'hpc'"
-                 class="column items-center"
-            >
-              <q-icon
-                class="col"
-                name="mdi-rocket-launch"
-                color="primary"
-                size="md"
-              />
-              <div class="col">
-                {{ tc('高性能计算') }}
-              </div>
-            </div>
+          <!--            <div v-if="props.row.app_service?.category === 'hpc'"-->
+          <!--                 class="column items-center"-->
+          <!--            >-->
+          <!--              <q-icon-->
+          <!--                class="col"-->
+          <!--                name="mdi-rocket-launch"-->
+          <!--                color="primary"-->
+          <!--                size="md"-->
+          <!--              />-->
+          <!--              <div class="col">-->
+          <!--                {{ tc('高性能计算') }}-->
+          <!--              </div>-->
+          <!--            </div>-->
 
-            <div v-if="props.row.app_service?.category === 'high-cloud'"
-                 class="column items-center"
-            >
-              <q-icon
-                class="col"
-                name="mdi-security"
-                color="primary"
-                size="md"
-              />
-              <div class="col">
-                {{ tc('高等级云') }}
-              </div>
-            </div>
+          <!--            <div v-if="props.row.app_service?.category === 'high-cloud'"-->
+          <!--                 class="column items-center"-->
+          <!--            >-->
+          <!--              <q-icon-->
+          <!--                class="col"-->
+          <!--                name="mdi-security"-->
+          <!--                color="primary"-->
+          <!--                size="md"-->
+          <!--              />-->
+          <!--              <div class="col">-->
+          <!--                {{ tc('高等级云') }}-->
+          <!--              </div>-->
+          <!--            </div>-->
 
-            <div v-if="props.row.app_service?.category === 'other'"
-                 class="column items-center"
-            >
-              <q-icon
-                class="col"
-                name="mdi-help-circle-outline"
-                color="primary"
-                size="md"
-              />
-              <div class="col">
-                {{ tc('其它') }}
-              </div>
-            </div>
+          <!--            <div v-if="props.row.app_service?.category === 'other'"-->
+          <!--                 class="column items-center"-->
+          <!--            >-->
+          <!--              <q-icon-->
+          <!--                class="col"-->
+          <!--                name="mdi-help-circle-outline"-->
+          <!--                color="primary"-->
+          <!--                size="md"-->
+          <!--              />-->
+          <!--              <div class="col">-->
+          <!--                {{ tc('其它') }}-->
+          <!--              </div>-->
+          <!--            </div>-->
 
-          </q-td>
+          <!--          </q-td>-->
 
           <q-td key="redeemer" :props="props">
             {{ props.row.user?.username || tc('未知') }}

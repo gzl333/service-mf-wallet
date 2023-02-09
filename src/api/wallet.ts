@@ -175,6 +175,55 @@ export default {
       return axiosWallet.get('/storage/service', config)
     }
   },
+  trade: {
+    getTradeAppService (
+      payload?: {
+        query?: {
+          page?: number
+          page_size?: number // 不传默认20，最大200
+          app_id?: string
+        }
+      }
+    ) {
+      const config = {
+        params: payload?.query
+      }
+      return axiosWallet.get('/trade/app_service', config)
+    },
+    getTradeAppServiceAdmin (
+      payload?: {
+        query?: {
+          page?: number
+          page_size?: number // 不传默认20，最大200
+          app_id?: string
+        }
+      }
+    ) {
+      const config = {
+        params: payload?.query
+      }
+      return axiosWallet.get('/trade/app_service/admin', config)
+    },
+    // ...
+    getTradeTradeBill (
+      payload?: {
+        query?: {
+          marker?: string
+          page_size?: number
+          vo_id?: string
+          trade_type?: string
+          time_start?: string
+          time_end?: string
+          app_service_id?: string
+        }
+      }
+    ) {
+      const config = {
+        params: payload?.query
+      }
+      return axiosWallet.get('/trade/tradebill', config)
+    }
+  },
   user: {
     getUserPermissionPolicy (payload?: {
       query?: {

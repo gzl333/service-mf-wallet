@@ -164,6 +164,7 @@ const accounts = computed(() => Object.values(store.tables.groupAccountTable.byI
                             unelevated
                             no-caps
                             color="green"
+                            disabled
                           >
                             {{ tc('充值') }}
                           </q-btn>

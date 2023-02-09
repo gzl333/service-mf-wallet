@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed/* , PropType  */ } from 'vue'
+import { ref, computed, watch/* , PropType  */ } from 'vue'
 import { navigateToUrl } from 'single-spa'
 import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
@@ -36,8 +36,24 @@ const {
 const exceptionNotifier = useExceptionNotifier()
 
 // 筛选服务单元
-const serviceOptions = computed(() => store.getServiceOptions('withoutAll'))
-const serviceSelection = ref('1')
+const serviceOptions = computed(() => store.getAppServiceOptions(true, false))
+const serviceSelection = ref('')
+const chooseService = () => {
+  serviceSelection.value = serviceOptions.value[0]?.value
+}
+
+if (store.tables.appServiceAdminTable.status === 'total') {
+  // 如果table读取完毕，则选取第一项
+  chooseService()
+} else {
+  // table未加载完，则需等待table加载完毕
+  watch(serviceOptions, () => {
+    // 一直watch，但是只有table total状态时才选择
+    if (store.tables.appServiceAdminTable.status === 'total') {
+      chooseService()
+    }
+  })
+}
 
 // 限额设置
 const MAX_DENOMINATION = 100000 // 单张代金券最大面额
@@ -109,28 +125,28 @@ const onOKClick = async () => {
     return
   }
 
+  // notify
+  const dismiss = Notify.create({
+    classes: 'notification-positive shadow-15',
+    // icon: 'mdi-check-circle',
+    spinner: true,
+    textColor: 'positive',
+    message: `${tc('正在创建代金券')}`,
+    position: 'bottom',
+    closeBtn: true,
+    timeout: 0, // infinite
+    multiLine: false
+  })
+
   // 创建代金券
   try {
-    // notify
-    const dismiss = Notify.create({
-      classes: 'notification-positive shadow-15',
-      // icon: 'mdi-check-circle',
-      spinner: true,
-      textColor: 'positive',
-      message: `${tc('正在创建代金券')}`,
-      position: 'bottom',
-      closeBtn: true,
-      timeout: 0, // infinite
-      multiLine: false
-    })
-
     // req： 同时发出多个网络请求，并等待所有成功结果
     void await Promise.all([...Array(Number(amount.value))].map(() => api.wallet.admin.postAdminCashcoupon({
       body: {
         face_value: denomination.value.toString(),
         effective_time: startDateTimeStr.value,
         expiration_time: endDateTimeStr.value,
-        app_service_id: store.tables.serviceTable.byId[serviceSelection.value]?.pay_app_service_id,
+        app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id,
         ...(username.value !== '' ? { username: username.value } : {})
       }
     })))
@@ -154,7 +170,10 @@ const onOKClick = async () => {
     // jump： stamp是时间戳，唯一作用是防止进入相同路径而不刷新
     navigateToUrl('/my/wallet/manage/voucher?stamp=' + new Date().getTime())
   } catch (exception) {
-    exceptionNotifier(exception)
+    // notify
+    dismiss()
+    exceptionNotifier(exception, 'CreateVoucherDialog')
+    console.log(exception)
   }
 }
 
@@ -200,44 +219,59 @@ const onOKClick = async () => {
 
             <template v-slot:option="scope">
               <q-item v-bind="scope.itemProps">
-                <q-tooltip>
-                  <div v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'">
-                    服务单元运行中
-                  </div>
-                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'">
-                    服务单元暂停服务
-                  </div>
-                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'">
-                    服务单元已删除
-                  </div>
-                  <div v-else>
-                    全部服务单元
-                  </div>
-                </q-tooltip>
-                <q-item-section thumbnail>
-                  <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'"
-                          color="light-green"
-                          name="play_arrow"/>
-                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'"
-                          color="red"
-                          name="pause"/>
-                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'"
-                          color="black"
-                          name="clear"/>
-                  <q-icon v-else color="primary" name="done_all"/>
-                </q-item-section>
+                <!--                <q-tooltip>-->
+                <!--                  <div v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'">-->
+                <!--                    服务单元运行中-->
+                <!--                  </div>-->
+                <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'">-->
+                <!--                    服务单元暂停服务-->
+                <!--                  </div>-->
+                <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'">-->
+                <!--                    服务单元已删除-->
+                <!--                  </div>-->
+                <!--                  <div v-else>-->
+                <!--                    全部服务单元-->
+                <!--                  </div>-->
+                <!--                </q-tooltip>-->
+                <!--                <q-item-section thumbnail>-->
+                <!--                  <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'"-->
+                <!--                          color="light-green"-->
+                <!--                          name="play_arrow"/>-->
+                <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'"-->
+                <!--                          color="red"-->
+                <!--                          name="pause"/>-->
+                <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'"-->
+                <!--                          color="black"-->
+                <!--                          name="clear"/>-->
+                <!--                  <q-icon v-else color="primary" name="done_all"/>-->
+                <!--                </q-item-section>-->
                 <q-item-section>
                   <q-item-label class="row items-center">
-                    <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.pay_app_service_type === 'server'"
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-server'"
                             class="col-auto"
                             color="primary"
                             size="sm"
                             name="computer"/>
-                    <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.pay_app_service_type === 'storage'"
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-object'"
                             class="col-auto"
                             color="primary"
                             size="sm"
                             name="mdi-database"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'high-cloud'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-security"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'hpc'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-rocket-launch"/>
+                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'other'"
+                            class="col-auto"
+                            color="primary"
+                            size="sm"
+                            name="mdi-help-circle-outline"/>
                     <div class="col-auto">
                       {{ i18n.global.locale === 'zh' ? scope.opt.label : scope.opt.labelEn }}
                     </div>

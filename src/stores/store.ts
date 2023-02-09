@@ -12,6 +12,49 @@ import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 // const { tc } = i18n.global
 const exceptionNotifier = useExceptionNotifier()
 
+export interface AppServiceInterface {
+  id: string
+  name: string
+  name_en: string
+  resources: string
+  desc: string
+  creation_time: string
+  status: 'normal' | 'unaudited' | 'ban' // 暂未启用'unaudited', _('未审核') 'normal', _('正常') 'ban', _('禁止')
+  longitude: number
+  latitude: number
+  category: 'vms-server' | 'vms-object' | 'high-cloud' | 'hpc' | 'other'
+  orgnazition: {
+    id: string
+    name: string
+    name_en: string
+  },
+  app_id: string
+}
+
+export interface AppServiceAdminInterface {
+  id: string
+  name: string
+  name_en: string
+  resources: string
+  desc: string
+  creation_time: string
+  status: 'normal' | 'unaudited' | 'ban' // 暂未启用'unaudited', _('未审核') 'normal', _('正常') 'ban', _('禁止')
+  contact_person: string
+  contact_email: string
+  contact_telephone: string
+  contact_fixed_phone: string
+  contact_address: string
+  longitude: number
+  latitude: number
+  category: 'vms-server' | 'vms-object' | 'high-cloud' | 'hpc' | 'other'
+  orgnazition: {
+    id: string
+    name: string
+    name_en: string
+  },
+  app_id: string
+}
+
 export interface ServerServiceInterface {
   id: string
   name: string
@@ -160,6 +203,14 @@ export interface LocalIdTable<T> {
 
 /* 表的具体类型 */
 
+// 全部app service table， 给普通用户看的
+export interface AppServiceTableInterface extends TotalTable, IdTable<AppServiceInterface> {
+}
+
+// 全部有管理权限的 app service table
+export interface AppServiceAdminTableInterface extends TotalTable, IdTable<AppServiceInterface> {
+}
+
 // 全部service table
 export interface ServiceTableInterface extends TotalTable, IdTable<ServiceInterface> {
 }
@@ -193,6 +244,18 @@ export const useStore = defineStore('wallet', {
     },
     tables: {
       /* 整体加载表：一旦加载则全部加载 */
+      // 用户看的全部appService
+      appServiceTable: {
+        byId: {},
+        allIds: [],
+        status: 'init'
+      } as AppServiceTableInterface,
+      // 全部有管理权限的appService
+      appServiceAdminTable: {
+        byId: {},
+        allIds: [],
+        status: 'init'
+      } as AppServiceAdminTableInterface,
       // 全部service
       serviceTable: {
         byId: {},
@@ -221,7 +284,38 @@ export const useStore = defineStore('wallet', {
     }
   }),
   getters: {
-    // 根据所需，返回service options
+    // 根据所需，返回app service options
+    getAppServiceOptions: state => (isAdmin?: boolean, isWithAll?: boolean) => {
+      // 选择用哪个table
+      const currentTable = isAdmin ? state.tables.appServiceAdminTable : state.tables.appServiceTable
+      // 建立options
+      const appServices = currentTable.allIds.map(appServiceId => {
+        const appService = currentTable.byId[appServiceId]
+        return {
+          value: appService.id,
+          label: appService.name,
+          labelEn: appService.name_en
+        }
+      })
+      // 根据category排序
+      appServices.sort((a, b) => {
+        const appServiceA = currentTable.byId[a.value]
+        const appServiceB = currentTable.byId[b.value]
+        return -appServiceA.category.localeCompare(appServiceB.category, 'en')
+      })
+      if (isWithAll) {
+        // 插入默认选项
+        appServices.unshift(
+          {
+            value: 'all',
+            label: '全部服务单元',
+            labelEn: 'All Service Units'
+          }
+        )
+      }
+      return appServices
+    },
+    // 根据所需，返回service options todo OBSOLETE
     getServiceOptions: state => (style: 'withAll' | 'withoutAll' | 'admin') => {
       const services = (style === 'admin' ? state.items.adminServiceIds : state.tables.serviceTable.allIds).map(serviceId => {
         const currentService = state.tables.serviceTable.byId[serviceId]
@@ -305,6 +399,12 @@ export const useStore = defineStore('wallet', {
       // if (this.tables.accountTable.status === 'init') {
       //   void this.loadAccountTable()
       // }
+      if (this.tables.appServiceTable.status === 'init') {
+        void this.loadAppServiceTable()
+      }
+      if (this.tables.appServiceAdminTable.status === 'init') {
+        void this.loadAppServiceAdminTable()
+      }
       if (this.tables.serviceTable.status === 'init') {
         void this.loadServiceTable()
       }
@@ -313,6 +413,86 @@ export const useStore = defineStore('wallet', {
       }
       if (this.tables.groupAccountTable.status === 'init') {
         void this.loadGroupAccountTable()
+      }
+    },
+    // appServiceTable
+    async loadAppServiceTable () {
+      this.tables.appServiceTable = {
+        byId: {},
+        allIds: [],
+        status: 'init'
+      }
+      this.tables.appServiceTable.status = 'loading'
+      try {
+        /* 从分页数据中获取全部数据 */
+        const PAGE_SIZE = 200 // 单次获取的page size，目前后端支持最大200
+        let count = 0 // current count
+        let page = 1 // current page
+
+        // 先执行一次，再检查循环条件
+        do {
+          // 用当前分页条件获取数据
+          const respGetAppService = await api.wallet.trade.getTradeAppService({
+            query: {
+              page,
+              page_size: PAGE_SIZE
+            }
+          })
+          // 保存相应包内的数据
+          for (const data of respGetAppService.data.results as AppServiceInterface[]) {
+            Object.assign(this.tables.appServiceTable.byId, { [data.id]: data })
+            this.tables.appServiceTable.allIds.unshift(data.id)
+            this.tables.appServiceTable.allIds = [...new Set(this.tables.appServiceTable.allIds)]
+          }
+          // 更新分页数据
+          count = respGetAppService.data.count
+          page += 1
+        } while (this.tables.appServiceTable.allIds.length < count) // do体内执行完毕后，再检查循环条件，决定是否开始下次循环
+
+        this.tables.appServiceTable.status = 'total'
+      } catch (exception) {
+        // exceptionNotifier(exception)
+        this.tables.appServiceTable.status = 'error'
+      }
+    },
+    // appServiceAdminTable
+    async loadAppServiceAdminTable () {
+      this.tables.appServiceAdminTable = {
+        byId: {},
+        allIds: [],
+        status: 'init'
+      }
+      this.tables.appServiceAdminTable.status = 'loading'
+      try {
+        /* 从分页数据中获取全部数据 */
+        const PAGE_SIZE = 200 // 单次获取的page size，目前后端支持最大200
+        let count = 0 // current count
+        let page = 1 // current page
+
+        // 先执行一次，再检查循环条件
+        do {
+          // 用当前分页条件获取数据
+          const respGetAppServiceAdmin = await api.wallet.trade.getTradeAppServiceAdmin({
+            query: {
+              page,
+              page_size: PAGE_SIZE
+            }
+          })
+          // 保存相应包内的数据
+          for (const data of respGetAppServiceAdmin.data.results as AppServiceInterface[]) {
+            Object.assign(this.tables.appServiceAdminTable.byId, { [data.id]: data })
+            this.tables.appServiceAdminTable.allIds.unshift(data.id)
+            this.tables.appServiceAdminTable.allIds = [...new Set(this.tables.appServiceAdminTable.allIds)]
+          }
+          // 更新分页数据
+          count = respGetAppServiceAdmin.data.count
+          page += 1
+        } while (this.tables.appServiceAdminTable.allIds.length < count) // do体内执行完毕后，再检查循环条件，决定是否开始下次循环
+
+        this.tables.appServiceAdminTable.status = 'total'
+      } catch (exception) {
+        // exceptionNotifier(exception)
+        this.tables.appServiceAdminTable.status = 'error'
       }
     },
     // 加载全部service
@@ -344,7 +524,7 @@ export const useStore = defineStore('wallet', {
 
         this.tables.serviceTable.status = 'total'
       } catch (exception) {
-        exceptionNotifier(exception)
+        // exceptionNotifier(exception)
         this.tables.serviceTable.status = 'error'
       }
     },
@@ -365,7 +545,7 @@ export const useStore = defineStore('wallet', {
         }
         this.tables.adminServiceTable.status = 'total'
       } catch (exception) {
-        exceptionNotifier(exception)
+        // exceptionNotifier(exception)
         this.tables.adminServiceTable.status = 'error'
       }
     },

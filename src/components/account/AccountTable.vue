@@ -112,10 +112,10 @@ const onMouseLeaveRow = () => {
 }
 
 // 搜索方法，可扩展成更模糊的
-const searchMethod = (rows: AccountInterface[], terms: string): AccountInterface[] => rows.filter(account =>
-  account.name.toLowerCase().includes(terms) ||
-  account.description.toLowerCase().includes(terms) ||
-  account.company.toLowerCase().includes(terms)
+const searchMethod = (rows: AccountInterface[], term: string): AccountInterface[] => rows.filter(account =>
+  account.name.toLowerCase().includes(term) ||
+  account.description.toLowerCase().includes(term) ||
+  account.company.toLowerCase().includes(term)
 )
 
 </script>
@@ -235,7 +235,7 @@ const searchMethod = (rows: AccountInterface[], terms: string): AccountInterface
                 {{ tc('兑换代金券') }}
                 <q-tooltip> {{ tc('兑换代金券到此项目组') }}</q-tooltip>
               </div>
-              <div class="col text-green cursor-pointer">
+              <div class="col text-green cursor-pointer" disabled>
                 {{ tc('充值') }}
                 <q-tooltip> {{ tc('充值到此项目组') }}</q-tooltip>
               </div>
