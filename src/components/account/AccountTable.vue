@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue'
 // import { navigateToUrl } from 'single-spa'
-import { /* useStore, */ AccountInterface } from 'stores/store'
+import { useStore, AccountInterface } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
 import { navigateToUrl } from 'single-spa'
@@ -25,7 +25,7 @@ defineProps({
 // const emits = defineEmits(['change', 'delete'])
 
 const { tc } = i18n.global
-// const store = useStore()
+const store = useStore()
 // const route = useRoute()
 // const router = useRouter()
 
@@ -231,7 +231,7 @@ const searchMethod = (rows: AccountInterface[], term: string): AccountInterface[
 
           <q-td key="operation" :props="props">
             <div class="column q-gutter-y-md">
-              <div class="col text-primary cursor-pointer">
+              <div class="col text-primary cursor-pointer" @click="store.triggerRedeemCouponDialog(props.row.id)">
                 {{ tc('兑换代金券') }}
                 <q-tooltip> {{ tc('兑换代金券到此项目组') }}</q-tooltip>
               </div>

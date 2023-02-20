@@ -34,7 +34,7 @@ const activeTab = ref(store.items.currentPath[1]) // keep selection when reloadi
               <div class="row justify-between">
 
                 <div class="col-auto text-h6 q-pt-lg q-px-none">
-                  {{ tc('支付记录') }}
+                  {{ tc('账户流水') }}
                 </div>
 
               </div>

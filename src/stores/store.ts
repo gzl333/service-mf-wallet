@@ -6,6 +6,7 @@ import api from 'src/api'
 import { Dialog } from 'quasar'
 
 import CreateVoucherDialog from 'components/manage/CreateVoucherDialog.vue'
+import RedeemVoucherDialog from 'components/voucher/RedeemVoucherDialog.vue'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 
@@ -335,6 +336,21 @@ export const useStore = defineStore('wallet', {
         )
       }
       return services
+    },
+    getGroupOptions (state): { value: string; label: string; labelEn: string;}[] {
+      let groupOptions = []
+      for (const group of Object.values(state.tables.groupAccountTable.byId)) {
+        groupOptions.push(
+          {
+            value: group.id,
+            label: group.name,
+            labelEn: group.name
+          }
+        )
+      }
+      // 排序
+      groupOptions = groupOptions.sort((a, b) => -a.label.localeCompare(b.label, 'zh-CN'))
+      return groupOptions
     }
     // // 根据管理员权限，返回serviceOption：1.联邦管理员获取全部服务单元；2.服务单元管理员获取全部管理权限对应服务单元
     // getServiceOptionsByRole: state => (isFedAdmin: boolean) => {
@@ -665,6 +681,15 @@ export const useStore = defineStore('wallet', {
     triggerCreateVoucherDialog () {
       Dialog.create({
         component: CreateVoucherDialog
+      })
+    },
+    triggerRedeemCouponDialog (groupId?: string) {
+      // 传入groupId则默认选中该组
+      Dialog.create({
+        component: RedeemVoucherDialog,
+        componentProps: {
+          groupId
+        }
       })
     }
     /* dialog */

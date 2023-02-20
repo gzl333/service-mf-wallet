@@ -136,7 +136,9 @@ const accounts = computed(() => Object.values(store.tables.groupAccountTable.byI
                         </div>
 
                         <div class="row justify-center">
-                          <q-badge class="non-selectable" v-if="Number(store.items.personalBalance) < 0" color="red">
+                          <q-badge v-if="Number(store.items.personalBalance) < 0"
+                                   class="non-selectable"
+                                   color="red">
                             {{ tc('欠费') }}
                           </q-badge>
                         </div>
@@ -156,6 +158,7 @@ const accounts = computed(() => Object.values(store.tables.groupAccountTable.byI
                             unelevated
                             no-caps
                             color="primary"
+                            @click="store.triggerRedeemCouponDialog()"
                           >
                             {{ tc('兑换代金券') }}
                           </q-btn>

@@ -78,7 +78,7 @@ const releaseTime = process.env.releaseTime
             >
               <q-item-section class="column items-center">
                 <q-icon name="receipt_long" size="lg"/>
-                <div class="active-text text-center">{{ tc('支付记录') }}</div>
+                <div class="active-text text-center">{{ tc('账户流水') }}</div>
               </q-item-section>
             </q-item>
 
