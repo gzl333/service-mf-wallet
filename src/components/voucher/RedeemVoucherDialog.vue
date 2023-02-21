@@ -215,19 +215,19 @@ const onOKClick = async () => {
 
         <q-btn class="q-ma-sm"
                color="primary"
+               outline
+               no-caps
+               :label="tc('取消')"
+               @click="onDialogCancel"/>
+
+        <q-btn class="q-ma-sm"
+               color="primary"
                unelevated
                no-caps
                :label="tc('兑换')"
                @click="onOKClick"
                :loading="isLoading"
         />
-
-        <q-btn class="q-ma-sm"
-               color="primary"
-               unelevated
-               no-caps
-               :label="tc('取消')"
-               @click="onDialogCancel"/>
 
       </q-card-actions>
     </q-card>

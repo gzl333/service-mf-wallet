@@ -7,6 +7,7 @@ import { Dialog } from 'quasar'
 
 import CreateVoucherDialog from 'components/manage/CreateVoucherDialog.vue'
 import RedeemVoucherDialog from 'components/voucher/RedeemVoucherDialog.vue'
+import ChargeAccountDialog from 'components/account/ChargeAccountDialog.vue'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 
@@ -687,6 +688,15 @@ export const useStore = defineStore('wallet', {
       // 传入groupId则默认选中该组
       Dialog.create({
         component: RedeemVoucherDialog,
+        componentProps: {
+          groupId
+        }
+      })
+    },
+    triggerChargeAccountDialog (groupId?: string) {
+      // 传入groupId则默认选中该组
+      Dialog.create({
+        component: ChargeAccountDialog,
         componentProps: {
           groupId
         }

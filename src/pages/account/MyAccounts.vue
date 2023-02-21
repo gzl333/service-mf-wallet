@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed/* , PropType */ } from 'vue'
+import { ref, computed /* onMounted *//* , PropType */ } from 'vue'
 import { navigateToUrl } from 'single-spa'
 import { useStore } from 'stores/store'
-// import { useRoute, useRouter } from 'vue-router'
+import { useRoute/* , useRouter */ } from 'vue-router'
 import { i18n } from 'boot/i18n'
 
 // @ts-expect-error
@@ -21,9 +21,26 @@ import AccountTable from 'components/account/AccountTable.vue'
 
 const { tc } = i18n.global
 const store = useStore()
-// const route = useRoute()
+const route = useRoute()
 // const router = useRouter()
 const storeMain = useStoreMain()
+
+// 挂载后trigger dialog
+/*
+* ?trigger=redeem/charge
+* ?group=xxxx/不提供
+*  */
+
+// onMounted(() => {
+switch (route.query.trigger) {
+  case 'redeem':
+    store.triggerRedeemCouponDialog(route.query.group as string)
+    break
+  case 'charge':
+    store.triggerChargeAccountDialog(route.query.group as string)
+    break
+}
+// })
 
 const search = ref('')
 
@@ -167,7 +184,7 @@ const accounts = computed(() => Object.values(store.tables.groupAccountTable.byI
                             unelevated
                             no-caps
                             color="green"
-                            disabled
+                            @click="store.triggerChargeAccountDialog()"
                           >
                             {{ tc('充值') }}
                           </q-btn>

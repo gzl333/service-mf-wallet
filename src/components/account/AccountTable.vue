@@ -2,7 +2,7 @@
 import { ref, computed, PropType } from 'vue'
 // import { navigateToUrl } from 'single-spa'
 import { useStore, AccountInterface } from 'stores/store'
-// import { useRoute, useRouter } from 'vue-router'
+// import { useRoute/* , useRouter */ } from 'vue-router'
 import { i18n } from 'boot/i18n'
 import { navigateToUrl } from 'single-spa'
 
@@ -231,14 +231,29 @@ const searchMethod = (rows: AccountInterface[], term: string): AccountInterface[
 
           <q-td key="operation" :props="props">
             <div class="column q-gutter-y-md">
-              <div class="col text-primary cursor-pointer" @click="store.triggerRedeemCouponDialog(props.row.id)">
+
+              <q-btn class="col-auto"
+                     flat
+                     no-caps
+                     dense
+                     :ripple="false"
+                     color="primary"
+                     @click="store.triggerRedeemCouponDialog(props.row.id)">
                 {{ tc('兑换代金券') }}
                 <q-tooltip> {{ tc('兑换代金券到此项目组') }}</q-tooltip>
-              </div>
-              <div class="col text-green cursor-pointer" disabled>
+              </q-btn>
+
+              <q-btn class="col-auto"
+                     flat
+                     no-caps
+                     dense
+                     :ripple="false"
+                     color="green"
+                     @click="store.triggerChargeAccountDialog(props.row.id)">
                 {{ tc('充值') }}
                 <q-tooltip> {{ tc('充值到此项目组') }}</q-tooltip>
-              </div>
+              </q-btn>
+
             </div>
           </q-td>
 
