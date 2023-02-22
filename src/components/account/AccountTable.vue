@@ -238,21 +238,21 @@ const searchMethod = (rows: AccountInterface[], term: string): AccountInterface[
                      dense
                      :ripple="false"
                      color="primary"
-                     @click="store.triggerRedeemCouponDialog(props.row.id)">
+                     @click="store.triggerRedeemVoucherDialog(props.row.id)">
                 {{ tc('兑换代金券') }}
                 <q-tooltip> {{ tc('兑换代金券到此项目组') }}</q-tooltip>
               </q-btn>
 
-              <q-btn class="col-auto"
-                     flat
-                     no-caps
-                     dense
-                     :ripple="false"
-                     color="green"
-                     @click="store.triggerChargeAccountDialog(props.row.id)">
-                {{ tc('充值') }}
-                <q-tooltip> {{ tc('充值到此项目组') }}</q-tooltip>
-              </q-btn>
+<!--              <q-btn class="col-auto"-->
+<!--                     flat-->
+<!--                     no-caps-->
+<!--                     dense-->
+<!--                     :ripple="false"-->
+<!--                     color="green"-->
+<!--                     @click="store.triggerChargeAccountDialog(props.row.id)">-->
+<!--                {{ tc('充值') }}-->
+<!--                <q-tooltip> {{ tc('充值到此项目组') }}</q-tooltip>-->
+<!--              </q-btn>-->
 
             </div>
           </q-td>

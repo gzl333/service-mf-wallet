@@ -34,7 +34,7 @@ const storeMain = useStoreMain()
 // onMounted(() => {
 switch (route.query.trigger) {
   case 'redeem':
-    store.triggerRedeemCouponDialog(route.query.group as string)
+    store.triggerRedeemVoucherDialog(route.query.group as string)
     break
   case 'charge':
     store.triggerChargeAccountDialog(route.query.group as string)
@@ -175,7 +175,7 @@ const accounts = computed(() => Object.values(store.tables.groupAccountTable.byI
                             unelevated
                             no-caps
                             color="primary"
-                            @click="store.triggerRedeemCouponDialog()"
+                            @click="store.triggerRedeemVoucherDialog()"
                           >
                             {{ tc('兑换代金券') }}
                           </q-btn>

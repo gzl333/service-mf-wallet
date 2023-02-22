@@ -10,6 +10,7 @@ import RedeemVoucherDialog from 'components/voucher/RedeemVoucherDialog.vue'
 import ChargeAccountDialog from 'components/account/ChargeAccountDialog.vue'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
+import DeleteVoucherDialog from 'components/voucher/DeleteVoucherDialog.vue'
 
 // const { tc } = i18n.global
 const exceptionNotifier = useExceptionNotifier()
@@ -338,7 +339,7 @@ export const useStore = defineStore('wallet', {
       }
       return services
     },
-    getGroupOptions (state): { value: string; label: string; labelEn: string;}[] {
+    getGroupOptions (state): { value: string; label: string; labelEn: string; }[] {
       let groupOptions = []
       for (const group of Object.values(state.tables.groupAccountTable.byId)) {
         groupOptions.push(
@@ -684,12 +685,20 @@ export const useStore = defineStore('wallet', {
         component: CreateVoucherDialog
       })
     },
-    triggerRedeemCouponDialog (groupId?: string) {
+    triggerRedeemVoucherDialog (groupId?: string) {
       // 传入groupId则默认选中该组
       Dialog.create({
         component: RedeemVoucherDialog,
         componentProps: {
           groupId
+        }
+      })
+    },
+    triggerDeleteVoucherDialog (voucherId: string) {
+      Dialog.create({
+        component: DeleteVoucherDialog,
+        componentProps: {
+          voucherId
         }
       })
     },

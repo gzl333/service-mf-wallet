@@ -198,14 +198,14 @@ const onMouseLeaveRow = () => {
 
 // 分栏定义
 const columns = computed(() => [
-  {
-    name: 'status',
-    label: (() => tc('兑换状态'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px',
-    headerStyle: 'padding: 0 2px'
-  },
+  // {
+  //   name: 'status',
+  //   label: (() => tc('兑换状态'))(),
+  //   align: 'center',
+  //   classes: 'ellipsis',
+  //   style: 'padding: 15px 0px',
+  //   headerStyle: 'padding: 0 2px'
+  // },
   {
     name: 'id',
     label: (() => tc('代金券ID'))(),
@@ -239,16 +239,8 @@ const columns = computed(() => [
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'expirationTime',
-    label: (() => tc('失效期'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px; max-width: 150px; word-break: break-all; word-wrap: break-word; white-space: normal;',
-    headerStyle: 'padding: 0 2px'
-  },
-  {
-    name: 'denomination',
-    label: (() => tc('原始面额'))(),
+    name: 'validTime',
+    label: (() => tc('有效期'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -259,8 +251,8 @@ const columns = computed(() => [
     label: (() => tc('余额'))(),
     align: 'center',
     classes: 'ellipsis',
-    headerStyle: 'padding: 0 0 0 1px',
-    style: 'padding: 15px 0px; max-width: 100px; word-break: break-all; word-wrap: break-word; white-space: normal;'
+    style: 'padding: 15px 0px',
+    headerStyle: 'padding: 0 2px'
   },
   {
     name: 'operation',
@@ -525,47 +517,47 @@ const clearRowSelection = () => {
             <q-checkbox v-model="props.selected" dense size="xs"/>
           </q-td>
 
-          <q-td key="status" :props="props">
-            <q-chip v-if="props.row.status === 'wait'"
-                    style="width: 80px;"
-                    color="primary"
-                    text-color="white"
-                    icon="more_horiz">
-              <div class="row justify-center">
-                {{ tc('待兑换') }}
-              </div>
-            </q-chip>
+          <!--          <q-td key="status" :props="props">-->
+          <!--            <q-chip v-if="props.row.status === 'wait'"-->
+          <!--                    style="width: 80px;"-->
+          <!--                    color="primary"-->
+          <!--                    text-color="white"-->
+          <!--                    icon="more_horiz">-->
+          <!--              <div class="row justify-center">-->
+          <!--                {{ tc('待兑换') }}-->
+          <!--              </div>-->
+          <!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'available'"
-                    style="width: 80px;"
-                    color="light-green"
-                    text-color="white"
-                    icon="done">
-              <div class="row justify-center">
-                {{ tc('已兑换') }}
-              </div>
-            </q-chip>
+          <!--            <q-chip v-if="props.row.status === 'available'"-->
+          <!--                    style="width: 80px;"-->
+          <!--                    color="light-green"-->
+          <!--                    text-color="white"-->
+          <!--                    icon="done">-->
+          <!--              <div class="row justify-center">-->
+          <!--                {{ tc('已兑换') }}-->
+          <!--              </div>-->
+          <!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'cancelled'"
-                    style="width: 80px;"
-                    color="red"
-                    text-color="white"
-                    icon="close">
-              <div class="row justify-center">
-                {{ tc('已取消') }}
-              </div>
-            </q-chip>
+          <!--            <q-chip v-if="props.row.status === 'cancelled'"-->
+          <!--                    style="width: 80px;"-->
+          <!--                    color="red"-->
+          <!--                    text-color="white"-->
+          <!--                    icon="close">-->
+          <!--              <div class="row justify-center">-->
+          <!--                {{ tc('已取消') }}-->
+          <!--              </div>-->
+          <!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'deleted'"
-                    style="width: 80px;"
-                    color="grey"
-                    text-color="white"
-                    icon="delete_forever">
-              <div class="row justify-center">
-                {{ tc('已删除') }}
-              </div>
-            </q-chip>
-          </q-td>
+          <!--            <q-chip v-if="props.row.status === 'deleted'"-->
+          <!--                    style="width: 80px;"-->
+          <!--                    color="grey"-->
+          <!--                    text-color="white"-->
+          <!--                    icon="delete_forever">-->
+          <!--              <div class="row justify-center">-->
+          <!--                {{ tc('已删除') }}-->
+          <!--              </div>-->
+          <!--            </q-chip>-->
+          <!--          </q-td>-->
 
           <q-td key="id" :props="props">
             {{ props.row.id }}
@@ -626,44 +618,112 @@ const clearRowSelection = () => {
 
           <q-td key="redeemTime" :props="props">
             <div v-if="i18n.global.locale==='zh'">
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
             </div>
 
             <div v-else>
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
             </div>
           </q-td>
 
-          <q-td key="expirationTime" :props="props">
-            <div v-if="i18n.global.locale==='zh'">
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+          <q-td key="validTime" :props="props">
+            <div class="row items-center justify-center">
+
+              <div class="col-auto">
+                <div v-if="i18n.global.locale==='zh'">
+                  <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+                  <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+                </div>
+
+                <div v-else>
+                  <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+                  <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+                </div>
+              </div>
+
+              <div class="col-auto q-px-sm">
+                -
+              </div>
+
+              <div class="col-auto">
+                <div v-if="i18n.global.locale==='zh'">
+                  <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+                  <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+                </div>
+
+                <div v-else>
+                  <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+                  <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+                </div>
+              </div>
+
             </div>
 
-            <div v-else>
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
-            </div>
-          </q-td>
-
-          <q-td key="denomination" :props="props">
-            {{ props.row.face_value }} {{ tc('点', Number(props.row.face_value)) }}
           </q-td>
 
           <q-td key="balance" :props="props">
-            {{ props.row.balance }} {{ tc('点', Number(props.row.balance)) }}
+
+            <div class="row items-center justify-center">
+
+              <q-knob
+                class="col-auto"
+                readonly
+                :model-value="Number(props.row.balance) / Number(props.row.face_value) * 100"
+                show-value
+                size="90px"
+                :thickness="0.22"
+                color="green"
+                track-color="grey-3"
+              >
+                <div class="text-caption text-green">
+                  {{ (Number(props.row.balance) / Number(props.row.face_value) * 100).toFixed(2) }}%
+                </div>
+              </q-knob>
+
+              <div class="col-auto column">
+
+                <div class="col-auto column">
+                  <div class="col-auto text-grey">
+                    {{ tc('当前余额') }}
+                  </div>
+                  <div class="col-auto text-green">
+                    {{ props.row.balance }}
+                  </div>
+                </div>
+
+                <div class="col-auto column">
+                  <div class="col-auto text-grey">
+                    {{ tc('原始面额') }}
+                  </div>
+                  <div class="col-auto text-green">
+                    {{ props.row.face_value }}
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
           </q-td>
 
           <q-td key="operation" :props="props">
-            <q-btn flat dense no-caps color="primary">
-              删除
-            </q-btn>
 
-            <!--            <q-btn flat dense no-caps color="primary" @click="stopServer(props.row)">-->
-            <!--              关机-->
-            <!--            </q-btn>-->
+            <div class="column">
+              <q-btn flat dense no-caps color="primary">
+                {{ tc('查看明细') }}
+              </q-btn>
+
+              <q-btn
+                flat
+                dense
+                no-caps
+                color="primary"
+              @click="store.triggerDeleteVoucherDialog(props.row.id)">
+                {{ tc('删除') }}
+              </q-btn>
+            </div>
           </q-td>
 
         </q-tr>
