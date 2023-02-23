@@ -205,7 +205,7 @@ export default {
       return axiosWallet.get('/trade/app_service/admin', config)
     },
     // ...
-    getTradeTradeBill (
+    getTradeBill (
       payload?: {
         query?: {
           marker?: string

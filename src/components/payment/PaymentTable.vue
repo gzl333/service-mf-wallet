@@ -5,7 +5,7 @@ import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
 import api from 'src/api'
-import { exportFile, Notify } from 'quasar'
+import { exportFile, Notify, date } from 'quasar'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 // import useCopyToClipboard from 'src/hooks/useCopyToClipboard'
@@ -40,65 +40,60 @@ const groupOptions = computed(() => store.tables.groupAccountTable.allIds.map((a
   label: store.tables.groupAccountTable.byId[accountId].name
 })))
 
-// 项目组默认选择
-const chooseGroup = () => {
-  groupSelection.value = props.groupId || groupOptions.value[0]?.value || ''
-}
-// setup时调用一次 table已加载时，从别的页面进入本页面要选一次默认值
-if (store.tables.groupAccountTable.status === 'total') {
-  chooseGroup()
-}
-// 刷新页面，table未加载时进入页面，根据table的加载状态变化一次都要选一次默认值。细分到每个table。
-watch(groupOptions, () => {
+if (props.isGroup) {
+  // 项目组默认选择
+  const chooseGroup = () => {
+    groupSelection.value = props.groupId || groupOptions.value[0]?.value || ''
+  }
+  // setup时调用一次 table已加载时，从别的页面进入本页面要选一次默认值
   if (store.tables.groupAccountTable.status === 'total') {
     chooseGroup()
-    loadRows('first') // 读取当前项目组的rows
+    onMounted(() => (loadRows('first')))
+  } else {
+    // 刷新页面，table未加载时进入页面，根据table的加载状态变化一次都要选一次默认值。细分到每个table。
+    watch(groupOptions, () => {
+      if (store.tables.groupAccountTable.status === 'total') {
+        chooseGroup()
+        loadRows('first') // 读取当前项目组的rows
+      }
+    })
   }
-})
-
-// if (!props.isGroup) {
-//   onMounted(() => (loadRows('first')))
-// }
-
-onMounted(() => (loadRows('first')))
+} else {
+  onMounted(() => (loadRows('first')))
+}
 
 // 筛选服务单元
 const serviceOptions = computed(() => store.getAppServiceOptions(false, true))
 const serviceSelection = ref('all')
 
-// 筛选支付状态
-const statusOptions = [
+// 筛选日期
+const startTime = ref(date.formatDate(date.startOfDate(Date.now(), 'month'), 'YYYY-MM-DD'))
+const endTime = ref(date.formatDate(date.endOfDate(Date.now(), 'month'), 'YYYY-MM-DD'))
+
+// 交易类型
+const typeOptions = [
   {
     value: 'all',
-    label: '全部状态',
-    labelEn: 'All Status'
+    label: '全部类型',
+    labelEn: 'All Types'
   },
   {
-    value: 'wait',
-    label: '等待支付',
-    labelEn: 'To Be Paid'
+    value: 'payment',
+    label: '支付',
+    labelEn: 'Payment'
   },
   {
-    value: 'success',
-    label: '支付成功',
-    labelEn: 'Successful'
+    value: 'recharge',
+    label: '充值',
+    labelEn: 'Recharge'
   },
   {
-    value: 'error',
-    label: '支付失败',
-    labelEn: 'Failed'
-  },
-  {
-    value: 'closed',
-    label: '支付关闭',
-    labelEn: 'Closed'
+    value: 'refund',
+    label: '退款',
+    labelEn: 'Refund'
   }
 ]
-const statusSelection = ref('all')
-
-// 筛选日期
-const startTime = ref('')
-const endTime = ref('')
+const typeSelection = ref<'payment' | 'recharge' | 'refund' | 'all'>('all')
 
 // table loading status
 const isLoading = ref(false)
@@ -125,7 +120,7 @@ const paginationMarker = ref({
 // 重置所有搜索条件
 const resetFilters = () => {
   serviceSelection.value = 'all'
-  statusSelection.value = 'all'
+  typeSelection.value = 'all'
   startTime.value = ''
   endTime.value = ''
 }
@@ -137,13 +132,14 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
   // request
   try {
     if (direction === 'first') {
-      const respGetPayment = await api.wallet['payment-history'].getPaymentHistory({
+      const respGetPayment = await api.wallet.trade.getTradeBill({
         query: {
+          // 第一页不传marker
           page_size: paginationMarker.value.page_size,
           ...(props.isGroup && { vo_id: groupSelection.value }),
-          ...(statusSelection.value !== 'all' && { status: statusSelection.value }),
-          ...(startTime.value !== '' && { time_start: startTime.value }),
-          ...(endTime.value !== '' && { time_end: endTime.value }),
+          ...(typeSelection.value !== 'all' && { trade_type: typeSelection.value }),
+          ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
+          ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
           ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id })
         }
       })
@@ -173,14 +169,14 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
         })
       } else {
         // 有后一页
-        const respGetPayment = await api.wallet['payment-history'].getPaymentHistory({
+        const respGetPayment = await api.wallet.trade.getTradeBill({
           query: {
             marker: paginationMarker.value.markers[paginationMarker.value.currentIndex + 1],
             page_size: paginationMarker.value.page_size,
             ...(props.isGroup && { vo_id: groupSelection.value }),
-            ...(statusSelection.value !== 'all' && { status: statusSelection.value }),
-            ...(startTime.value !== '' && { time_start: startTime.value }),
-            ...(endTime.value !== '' && { time_end: endTime.value }),
+            ...(typeSelection.value !== 'all' && { status: typeSelection.value }),
+            ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
+            ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
             ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id })
           }
         })
@@ -212,14 +208,14 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
         })
       } else {
         // 有前一页
-        const respGetPayment = await api.wallet['payment-history'].getPaymentHistory({
+        const respGetPayment = await api.wallet.trade.getTradeBill({
           query: {
             marker: paginationMarker.value.markers[paginationMarker.value.currentIndex - 1],
             page_size: paginationMarker.value.page_size,
             ...(props.isGroup && { vo_id: groupSelection.value }),
-            ...(statusSelection.value !== 'all' && { status: statusSelection.value }),
-            ...(startTime.value !== '' && { time_start: startTime.value }),
-            ...(endTime.value !== '' && { time_end: endTime.value }),
+            ...(typeSelection.value !== 'all' && { status: typeSelection.value }),
+            ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
+            ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
             ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id }) // id -> pay_app_service_id
           }
         })
@@ -257,8 +253,16 @@ const onMouseLeaveRow = () => {
 // 分栏定义
 const columns = computed(() => [
   {
+    name: 'time',
+    label: (() => tc('交易时间'))(),
+    align: 'center',
+    classes: 'ellipsis',
+    style: 'padding: 15px 0px',
+    headerStyle: 'padding: 0 2px'
+  },
+  {
     name: 'id',
-    label: (() => tc('支付记录ID'))(),
+    label: (() => tc('ID'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -274,31 +278,23 @@ const columns = computed(() => [
   },
   {
     name: 'subject',
-    label: (() => tc('计费途径'))(),
+    label: (() => tc('交易内容'))(),
     align: 'center',
     classes: 'ellipsis',
     headerStyle: 'padding: 0 0 0 1px',
     style: 'width: 100px;padding: 15px 0px'
   },
   {
-    name: 'method',
-    label: (() => tc('支付方式'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px; min-width: 150px; max-width: 200px; word-break: break-all; word-wrap: break-word; white-space: normal;',
-    headerStyle: 'padding: 0 2px'
-  },
-  {
-    name: 'name',
-    label: (() => tc('支付账户'))(),
+    name: 'type',
+    label: (() => tc('交易类型'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'due_amount',
-    label: (() => tc('应付金额'))(),
+    name: 'amount',
+    label: (() => tc('交易总金额'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -306,44 +302,37 @@ const columns = computed(() => [
   },
   {
     name: 'balance_amount',
-    label: (() => tc('余额支付金额'))(),
+    label: (() => tc('余额交易金额'))(),
     align: 'center',
     classes: 'ellipsis',
-    style: 'padding: 15px 0px; max-width: 150px; word-break: break-all; word-wrap: break-word; white-space: normal;',
+    style: 'padding: 15px 0px',
     headerStyle: 'padding: 0 2px'
   },
   {
     name: 'voucher_amount',
-    label: (() => tc('代金券支付金额'))(),
+    label: (() => tc('代金券交易金额'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'success_time',
-    label: (() => tc('支付时间'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    headerStyle: 'padding: 0 0 0 1px',
-    style: 'padding: 15px 0px; max-width: 100px; word-break: break-all; word-wrap: break-word; white-space: normal;'
-  },
-  {
-    name: 'status',
-    label: (() => tc('状态'))(),
+    name: 'balance',
+    label: (() => tc('交易后余额'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
     headerStyle: 'padding: 0 2px'
-  },
-  {
-    name: 'operation',
-    label: (() => tc('操作'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px;width: 100px;',
-    headerStyle: 'padding: 0 2px'
-  }])
+  }
+  // {
+  //   name: 'operation',
+  //   label: (() => tc('操作'))(),
+  //   align: 'center',
+  //   classes: 'ellipsis',
+  //   style: 'padding: 15px 0px;width: 100px;',
+  //   headerStyle: 'padding: 0 2px'
+  // }
+])
 
 // row selection
 const rowSelection = ref<PaymentInterface[]>([])
@@ -530,13 +519,13 @@ const exportTable = () => {
 
           <q-select class="col-auto"
                     style="min-width: 170px;"
-                    :label-color="statusSelection !== 'all' ? 'primary' : ''"
+                    :label-color="typeSelection !== 'all' ? 'primary' : ''"
                     outlined
                     dense
                     stack-label
                     :label="tc('筛选支付状态')"
-                    v-model="statusSelection"
-                    :options="statusOptions"
+                    v-model="typeSelection"
+                    :options="typeOptions"
                     emit-value
                     map-options
                     option-value="value"
@@ -549,6 +538,20 @@ const exportTable = () => {
             <!--                </span>-->
             <!--          </template>-->
           </q-select>
+
+          <q-input style="width: 170px;"
+                   v-model="startTime"
+                   type="date"
+                   :label="tc('开始时间')"
+                   outlined
+                   dense/>
+
+          <q-input style="width: 170px;"
+                   v-model="endTime"
+                   type="date"
+                   :label="tc('截止时间')"
+                   outlined
+                   dense/>
 
         </div>
 
@@ -624,6 +627,18 @@ const exportTable = () => {
             <q-checkbox v-model="props.selected" dense size="xs"/>
           </q-td>
 
+          <q-td key="time" :props="props">
+            <div v-if="i18n.global.locale==='zh'">
+              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+            </div>
+
+            <div v-else>
+              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+            </div>
+          </q-td>
+
           <q-td key="id" :props="props">
             {{ props.row.id }}
           </q-td>
@@ -685,16 +700,12 @@ const exportTable = () => {
             {{ props.row.subject }}
           </q-td>
 
-          <q-td key="method" :props="props">
-            {{ props.row.payment_method }}
+          <q-td key="type" :props="props">
+            {{ props.row.trade_type }}
           </q-td>
 
-          <q-td key="name" :props="props">
-            {{ props.row.payer_name }}
-          </q-td>
-
-          <q-td key="due_amount" :props="props">
-            {{ props.row.payable_amounts }}
+          <q-td key="amount" :props="props">
+            {{ props.row.trade_amounts }}
           </q-td>
 
           <q-td key="balance_amount" :props="props">
@@ -705,27 +716,15 @@ const exportTable = () => {
             {{ props.row.coupon_amount }}
           </q-td>
 
-          <q-td key="success_time" :props="props">
-            <div v-if="i18n.global.locale==='zh'">
-              <div>{{ new Date(props.row.payment_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
-              <div>{{ new Date(props.row.payment_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
-            </div>
-
-            <div v-else>
-              <div>{{ new Date(props.row.payment_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
-              <div>{{ new Date(props.row.payment_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
-            </div>
+          <q-td key="balance" :props="props">
+            {{ props.row.after_balance }}
           </q-td>
 
-          <q-td key="status" :props="props">
-            {{ props.row.status }}
-          </q-td>
-
-          <q-td key="operation" :props="props">
-            <q-btn flat dense no-caps color="primary">
-              查看详情
-            </q-btn>
-          </q-td>
+<!--          <q-td key="operation" :props="props">-->
+<!--            <q-btn flat dense no-caps color="primary">-->
+<!--              查看详情-->
+<!--            </q-btn>-->
+<!--          </q-td>-->
 
         </q-tr>
       </template>

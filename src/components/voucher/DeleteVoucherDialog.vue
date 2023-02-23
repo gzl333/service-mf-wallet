@@ -67,7 +67,7 @@ const voucher = {
 
 <template>
   <!-- notice dialogRef here -->
-  <q-dialog ref="dialogRef" @hide="onDialogHide" persistent>
+  <q-dialog ref="dialogRef" @hide="onDialogHide" >
     <q-card class="q-dialog-plugin dialog-negative">
 
       <q-card-section class="row items-center justify-center q-pb-md">
