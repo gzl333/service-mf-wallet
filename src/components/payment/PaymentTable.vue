@@ -121,12 +121,38 @@ const paginationMarker = ref({
 const resetFilters = () => {
   serviceSelection.value = 'all'
   typeSelection.value = 'all'
-  startTime.value = ''
-  endTime.value = ''
+  startTime.value = date.formatDate(date.startOfDate(Date.now(), 'month'), 'YYYY-MM-DD')
+  endTime.value = date.formatDate(date.endOfDate(Date.now(), 'month'), 'YYYY-MM-DD')
+}
+
+// 检查开始时间-截至时间的选择：截止时间应晚于开始时间
+const checkTime = () => {
+  const startTimeObj = date.extractDate(startTime.value, 'YYYY-MM-DD')
+  const endTimeObj = date.extractDate(endTime.value, 'YYYY-MM-DD')
+  const diff = date.getDateDiff(endTimeObj, startTimeObj, 'days')
+  if (diff <= 0) {
+    Notify.create({
+      classes: 'notification-negative shadow-15',
+      icon: 'mdi-alert',
+      textColor: 'negative',
+      message: '时间选择错误',
+      caption: '截止时间应晚于开始时间一天以上',
+      position: 'bottom',
+      closeBtn: true,
+      timeout: 0,
+      multiLine: false
+    })
+    return false
+  }
+  return true
 }
 
 // 根据当前搜索条件，更新rows，并更新pagination
 const loadRows = async (direction: 'first' | 'prev' | 'next') => {
+  // check inputs
+  if (!checkTime()) {
+    return
+  }
   // table loading
   isLoading.value = true
   // request
@@ -294,23 +320,7 @@ const columns = computed(() => [
   },
   {
     name: 'amount',
-    label: (() => tc('交易总金额'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px',
-    headerStyle: 'padding: 0 2px'
-  },
-  {
-    name: 'balance_amount',
-    label: (() => tc('余额交易金额'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px',
-    headerStyle: 'padding: 0 2px'
-  },
-  {
-    name: 'voucher_amount',
-    label: (() => tc('代金券交易金额'))(),
+    label: (() => tc('交易金额'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -363,7 +373,7 @@ const exportTable = () => {
       .join('\r\n')
 
   const status = exportFile(
-    `${tc('导出支付记录列表')}-${new Date().toLocaleString()}.csv`,
+    `${tc('导出账户流水列表')}-${!props.isGroup ? '个人账户' : store.tables.groupAccountTable.byId[groupSelection.value]?.name}-${new Date().toLocaleString()}.csv`,
     '\ufeff' + content,
     'text/csv'
   )
@@ -701,30 +711,64 @@ const exportTable = () => {
           </q-td>
 
           <q-td key="type" :props="props">
-            {{ props.row.trade_type }}
+
+            <div class="col-auto text-h6">
+              <div v-if="props.row.trade_type === 'payment'">
+                {{ tc('支付') }}
+              </div>
+              <div v-if="props.row.trade_type === 'recharge'" class="text-green">
+                {{ tc('充值') }}
+              </div>
+              <div v-if="props.row.trade_type === 'refund'" class="text-green">
+                {{ tc('退款') }}
+              </div>
+            </div>
+
           </q-td>
 
           <q-td key="amount" :props="props">
-            {{ props.row.trade_amounts }}
-          </q-td>
 
-          <q-td key="balance_amount" :props="props">
-            {{ props.row.amounts }}
-          </q-td>
+            <div class="row items-center justify-center text-h6"
+                 :class="[props.row.trade_type === 'recharge' ? 'text-green' : '', props.row.trade_type === 'refund' ? 'text-green' : '']">
+              {{ props.row.trade_amounts }}
+            </div>
 
-          <q-td key="voucher_amount" :props="props">
-            {{ props.row.coupon_amount }}
+            <div class="row items-center justify-center text-caption">
+              <div class="col-auto">
+                {{ tc('余额') }}
+              </div>
+              <div class="col-auto q-pr-xs">
+                :
+              </div>
+              <div class="col-auto">
+                {{ props.row.amounts }}
+              </div>
+            </div>
+
+            <div class="row items-center justify-center text-caption">
+              <div class="col-auto">
+                {{ tc('代金券') }}
+              </div>
+              <div class="col-auto q-pr-xs">
+                :
+              </div>
+              <div class="col-auto">
+                {{ props.row.coupon_amount }}
+              </div>
+            </div>
+
           </q-td>
 
           <q-td key="balance" :props="props">
-            {{ props.row.after_balance }}
+            <div class="row items-end justify-center">
+              <div class="col-auto text-h6">
+                {{ props.row.after_balance }}
+              </div>
+              <div class="col-auto q-pb-xs">
+                {{ tc('点', Number(props.row.after_balance)) }}
+              </div>
+            </div>
           </q-td>
-
-<!--          <q-td key="operation" :props="props">-->
-<!--            <q-btn flat dense no-caps color="primary">-->
-<!--              查看详情-->
-<!--            </q-btn>-->
-<!--          </q-td>-->
 
         </q-tr>
       </template>
