@@ -1,16 +1,16 @@
 <script setup lang="ts">
 // import { ref, computed, watch/* , PropType  */ } from 'vue'
 // import { navigateToUrl } from 'single-spa'
-import { useStore } from 'stores/store'
+// import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
-import { Notify, useDialogPluginComponent, QInput } from 'quasar'
+import { /*  Notify,  */useDialogPluginComponent /* QInput  */ } from 'quasar'
 
 // import api from 'src/api'
 
-import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
+// import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 
-const props = defineProps({
+/* const props =  */defineProps({
   voucherId: {
     type: String,
     required: true
@@ -20,18 +20,18 @@ const props = defineProps({
 defineEmits([...useDialogPluginComponent.emits])
 
 const { tc } = i18n.global
-const store = useStore()
+// const store = useStore()
 // const route = useRoute()
 // const router = useRouter()
 
 const {
   dialogRef,
-  onDialogHide,
+  onDialogHide
   // onDialogOK,
-  onDialogCancel
+  // onDialogCancel
 } = useDialogPluginComponent()
 
-const exceptionNotifier = useExceptionNotifier()
+// const exceptionNotifier = useExceptionNotifier()
 
 // getVoucher
 // temp

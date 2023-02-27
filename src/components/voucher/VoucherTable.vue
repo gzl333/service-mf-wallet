@@ -753,7 +753,7 @@ const clearRowSelection = () => {
                         :max="Math.ceil(pagination.count / pagination.rowsPerPage )"
                         :max-pages="9"
                         direction-links
-                        outline
+                        flat
                         :ripple="false"
                         @update:model-value="loadRows();clearRowSelection()"
           />

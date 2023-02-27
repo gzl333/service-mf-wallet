@@ -151,31 +151,21 @@ export interface AccountInterface {
 }
 
 export interface PaymentInterface {
-  id: string
-  subject: string
-  payment_method: 'coupon' | 'balance'
-  executor: string
-  payer_id: string
-  payer_name: string
-  payer_type: 'user' | 'vo'
-  payable_amounts: string
-  amounts: string
-  coupon_amount: string
-  creation_time: string
-  payment_time: string
-  remark: string
-  status: 'wait' | 'success' | 'error' | 'closed'
-  status_desc: string
-  order_id: string
-  app_id: string
-  app_service_id: string
-  'coupon_historys'?: {
-    cash_coupon_id: string
-    amounts: string
-    before_payment: string
-    after_payment: string
-    creation_time: string
-  }[]
+  'id': string
+  'subject': string
+  'trade_type': 'payment' | 'recharge' | 'refund'
+  'trade_id': string
+  'out_trade_no': string
+  'trade_amounts': string
+  'amounts': string
+  'coupon_amount': string
+  'after_balance': string
+  'creation_time': string
+  'remark': string
+  'owner_id': string
+  'owner_name': string
+  'owner_type': 'user' | 'vo'
+  'app_service_id': string
 }
 
 /* table的类型 */

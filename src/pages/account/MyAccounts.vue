@@ -205,7 +205,7 @@ const accounts = computed(() => Object.values(store.tables.groupAccountTable.byI
               <div class="row items-end justify-between">
 
                 <div class="col-auto text-grey">
-                  {{ tc('项目组账户') }}
+                  {{ tc('云主机项目组账户') }}
                 </div>
 
                 <q-input class="col-3" dense outlined v-model.trim="search" :label="tc('筛选项目组账户')">

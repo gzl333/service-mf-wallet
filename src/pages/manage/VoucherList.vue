@@ -175,16 +175,8 @@ const columns = computed(() => [
     headerStyle: 'padding: 0 2px'
   },
   {
-    name: 'expirationTime',
-    label: (() => tc('失效期'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px; max-width: 150px; word-break: break-all; word-wrap: break-word; white-space: normal;',
-    headerStyle: 'padding: 0 2px'
-  },
-  {
-    name: 'denomination',
-    label: (() => tc('原始面额'))(),
+    name: 'validTime',
+    label: (() => tc('有效期'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -195,16 +187,16 @@ const columns = computed(() => [
     label: (() => tc('余额'))(),
     align: 'center',
     classes: 'ellipsis',
-    headerStyle: 'padding: 0 0 0 1px',
-    style: 'padding: 15px 0px; max-width: 100px; word-break: break-all; word-wrap: break-word; white-space: normal;'
-  },
-  {
-    name: 'creator',
-    label: (() => tc('创建者'))(),
-    align: 'center',
-    style: 'padding: 15px 0px; width: 100px', // 固定宽度防止更新状态时抖动
+    style: 'padding: 15px 0px',
     headerStyle: 'padding: 0 2px'
   },
+  // {
+  //   name: 'creator',
+  //   label: (() => tc('创建者'))(),
+  //   align: 'center',
+  //   style: 'padding: 15px 0px; width: 100px', // 固定宽度防止更新状态时抖动
+  //   headerStyle: 'padding: 0 2px'
+  // },
   {
     name: 'code',
     label: (() => tc('兑换码'))(),
@@ -232,23 +224,27 @@ const clearRowSelection = () => {
 const exportTable = () => {
   // encoding to csv format
   const content =
-    [['代金券ID', '服务单元', '资源种类', '创建时间', '失效时间', '原始面额', '当前余额', '兑换状态', /* '兑换者', */ '兑换码']] // title
+    [i18n.global.locale === 'zh'
+      ? ['代金券ID', '服务单元', '资源种类', '创建时间', '失效时间', '原始面额', '当前余额', '兑换状态', '兑换码']
+      : ['Voucher ID', 'Service Node', 'Resource Type', 'Creation Time', 'Expiration Time', 'Denomination', 'Balance', 'Status', 'Exchange Code']
+    ] // title
       .concat(
         // rows
         rowSelection.value.map(row => [
           row.id,
           (i18n.global.locale === 'zh' ? row.app_service?.name : row.app_service?.name_en) as string,
           row.app_service?.category as string,
-          row.creation_time,
-          row.expiration_time,
+          new Date(row.creation_time).toLocaleString(),
+          new Date(row.expiration_time).toLocaleString(),
           row.face_value,
           row.balance,
           row.status,
-          /*  '未提供', */
           row.exchange_code
         ])
       )
       .join('\r\n')
+
+  // console.log(content)
 
   const status = exportFile(
     `${tc('导出代金券列表')}-${new Date().toLocaleString()}.csv`,
@@ -692,39 +688,99 @@ const exportTable = () => {
 
           <q-td key="redeemTime" :props="props">
             <div v-if="i18n.global.locale==='zh'">
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
             </div>
 
             <div v-else>
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
-              <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
             </div>
           </q-td>
 
-          <q-td key="expirationTime" :props="props">
-            <div v-if="i18n.global.locale==='zh'">
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+          <q-td key="validTime" :props="props">
+            <div class="row items-center justify-center">
+
+              <div class="col-auto">
+                <div v-if="i18n.global.locale==='zh'">
+                  <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+                  <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+                </div>
+
+                <div v-else>
+                  <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+                  <div>{{ new Date(props.row.effective_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+                </div>
+              </div>
+
+              <div class="col-auto q-px-sm">
+                -
+              </div>
+
+              <div class="col-auto">
+                <div v-if="i18n.global.locale==='zh'">
+                  <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+                  <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+                </div>
+
+                <div v-else>
+                  <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+                  <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+                </div>
+              </div>
+
             </div>
 
-            <div v-else>
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
-              <div>{{ new Date(props.row.expiration_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
-            </div>
-          </q-td>
-
-          <q-td key="denomination" :props="props">
-            {{ props.row.face_value }} {{ tc('点', Number(props.row.face_value)) }}
           </q-td>
 
           <q-td key="balance" :props="props">
-            {{ props.row.balance }} {{ tc('点', Number(props.row.balance)) }}
+
+            <div class="row items-center justify-center">
+
+              <q-knob
+                class="col-auto"
+                readonly
+                :model-value="Number(props.row.balance) / Number(props.row.face_value) * 100"
+                show-value
+                size="90px"
+                :thickness="0.22"
+                color="green"
+                track-color="grey-3"
+              >
+                <div class="text-caption text-green">
+                  {{ (Number(props.row.balance) / Number(props.row.face_value) * 100).toFixed(2) }}%
+                </div>
+              </q-knob>
+
+              <div class="col-auto column">
+
+                <div class="col-auto column">
+                  <div class="col-auto text-grey">
+                    {{ tc('当前余额') }}
+                  </div>
+                  <div class="col-auto text-green">
+                    {{ props.row.balance }}
+                  </div>
+                </div>
+
+                <div class="col-auto column">
+                  <div class="col-auto text-grey">
+                    {{ tc('原始面额') }}
+                  </div>
+                  <div class="col-auto text-green">
+                    {{ props.row.face_value }}
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
           </q-td>
 
-          <q-td key="creator" :props="props">
-            API暂未提供
-          </q-td>
+          <!--          <q-td key="creator" :props="props">-->
+          <!--            API暂未提供-->
+          <!--          </q-td>-->
 
           <q-td key="code" :props="props">
             {{ props.row.exchange_code }}
@@ -789,7 +845,7 @@ const exportTable = () => {
                         :max="Math.ceil(pagination.count / pagination.rowsPerPage )"
                         :max-pages="9"
                         direction-links
-                        outline
+                        flat
                         :ripple="false"
                         @update:model-value="loadRows();clearRowSelection()"
           />

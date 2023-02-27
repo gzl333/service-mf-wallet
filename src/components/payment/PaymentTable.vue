@@ -164,8 +164,8 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
           page_size: paginationMarker.value.page_size,
           ...(props.isGroup && { vo_id: groupSelection.value }),
           ...(typeSelection.value !== 'all' && { trade_type: typeSelection.value }),
-          ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
-          ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
+          ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
+          ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
           ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id })
         }
       })
@@ -201,8 +201,8 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
             page_size: paginationMarker.value.page_size,
             ...(props.isGroup && { vo_id: groupSelection.value }),
             ...(typeSelection.value !== 'all' && { status: typeSelection.value }),
-            ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
-            ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
+            ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
+            ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
             ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id })
           }
         })
@@ -240,8 +240,8 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
             page_size: paginationMarker.value.page_size,
             ...(props.isGroup && { vo_id: groupSelection.value }),
             ...(typeSelection.value !== 'all' && { status: typeSelection.value }),
-            ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
-            ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDThh:mm:ssZ') }),
+            ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
+            ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
             ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id }) // id -> pay_app_service_id
           }
         })
@@ -352,28 +352,34 @@ const clearRowSelection = () => {
 
 // export to csv
 const exportTable = () => {
-  // encoding to csv format
+  // encode to csv format
   const content =
-    [['支付记录ID', '服务单元', '计费途径', '支付方式', '支付账户', '应付金额', '余额支付金额', '代金券支付金额', '支付时间', '状态']] // title
+    [i18n.global.locale === 'zh'
+      ? ['交易时间', '交易记录ID', '服务单元', '交易内容', '交易类型', '交易金额', '余额支付金额', '代金券支付金额', '交易后余额']
+      : ['Trade Time', 'Trade ID', 'Service Node', 'Trade Content', 'Trade Type', 'Trade Amount', 'Paid by Balance', 'Paid by Voucher', 'Balance after Trade']
+    ] // title
       .concat(
         // rows
         rowSelection.value.map(row => [
+          new Date(row.creation_time).toLocaleString(),
           row.id,
-          row.app_service_id,
+          i18n.global.locale === 'zh'
+            ? store.tables.appServiceTable.byId[row.app_service_id].name
+            : store.tables.appServiceTable.byId[row.app_service_id].name_en,
           row.subject,
-          row.payment_method,
-          row.payer_name,
-          row.payable_amounts,
+          row.trade_type,
+          row.trade_amounts,
           row.amounts,
           row.coupon_amount,
-          row.payment_time,
-          row.status
+          row.after_balance
         ])
       )
       .join('\r\n')
 
+  // console.log(content)
+
   const status = exportFile(
-    `${tc('导出账户流水列表')}-${!props.isGroup ? '个人账户' : store.tables.groupAccountTable.byId[groupSelection.value]?.name}-${new Date().toLocaleString()}.csv`,
+    `${tc('导出账户流水列表')}-${!props.isGroup ? tc('个人账户') : store.tables.groupAccountTable.byId[groupSelection.value]?.name}-${new Date().toLocaleString()}.csv`,
     '\ufeff' + content,
     'text/csv'
   )
