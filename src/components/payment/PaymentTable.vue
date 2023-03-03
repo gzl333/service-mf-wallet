@@ -618,12 +618,13 @@ const exportTable = () => {
           </div>
 
           <div class="col-auto row items-center q-gutter-x-xs">
-            <div class="col-auto text-grey">批量操作</div>
+            <div class="col-auto text-grey">{{ tc('批量操作') }}</div>
             <q-btn
               :disable="rowSelection.length === 0"
               class="col-auto"
               color="primary"
-              :label="tc('导出为csv文件')"
+              :label="tc('导出')"
+              flat
               no-caps
               dense
               @click="exportTable"

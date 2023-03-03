@@ -84,7 +84,7 @@ const loadRows = async () => {
   isLoading.value = true
   // request
   try {
-    const respGetAdminVoucher = await api.wallet.admin.getAdminCashcoupon({
+    const respGetAdminVoucher = await api.wallet.admin.getAdminCashCoupon({
       query: {
         page: pagination.value.page,
         page_size: pagination.value.rowsPerPage,
@@ -159,6 +159,14 @@ const columns = computed(() => [
   //   style: 'padding: 15px 0px; min-width: 80px; max-width: 100px; word-break: break-all; word-wrap: break-word; white-space: normal;'
   // },
   {
+    name: 'validTime',
+    label: (() => tc('有效期'))(),
+    align: 'center',
+    classes: 'ellipsis',
+    style: 'padding: 15px 0px',
+    headerStyle: 'padding: 0 2px'
+  },
+  {
     name: 'redeemer',
     label: (() => tc('兑换者'))(),
     align: 'center',
@@ -169,14 +177,6 @@ const columns = computed(() => [
   {
     name: 'redeemTime',
     label: (() => tc('兑换日期'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px',
-    headerStyle: 'padding: 0 2px'
-  },
-  {
-    name: 'validTime',
-    label: (() => tc('有效期'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -266,6 +266,18 @@ const exportTable = () => {
   }
 }
 
+// 删除代金券
+const delVoucherAdmin = async (voucher: VoucherInterface) => {
+  // 调用dialog, 拿到事件hooks
+  const { onOk } = await store.triggerDeleteVoucherDialog(voucher, true)
+  // 用hooks注册对应状态的回调函数
+  onOk((isSuccess: boolean) => {
+    // 如果删除成功，就重新搜索，获取最新列表
+    if (isSuccess) {
+      loadRows()
+    }
+  })
+}
 </script>
 
 <template>
@@ -401,7 +413,7 @@ const exportTable = () => {
         </div>
 
         <div class="col-auto q-gutter-x-sm">
-          <q-btn unelevated no-caps color="primary" @click="store.triggerCreateVoucherDialog()">
+          <q-btn unelevated no-caps color="green" @click="store.triggerCreateVoucherDialog()">
             创建代金券
           </q-btn>
         </div>
@@ -438,31 +450,25 @@ const exportTable = () => {
 
         <div class="row full-width items-center justify-between">
 
-          <div v-if="pagination.count" class="col-auto row items-center">
+          <div class="col-auto row items-center">
+            <div v-if="pagination.count" class="col-auto row items-center">
+              <div class="text-grey">{{ tc('选中') }}</div>
+              <div class="">{{ rowSelection.length }}</div>
+              <div class="q-px-xs">/</div>
+            </div>
 
-            <div class="text-grey">{{ tc('选中') }}</div>
-            <div class="">{{ rowSelection.length }}</div>
-            <div class="q-px-xs">/</div>
             <div class="col-auto text-grey">{{ tc('搜索总计') }}</div>
             <div class="col-auto ">{{ pagination.count }}</div>
-
           </div>
 
           <div class="col-auto row items-center q-gutter-x-xs">
-            <div class="col-auto text-grey">批量操作</div>
+            <div class="col-auto text-grey">{{ tc('批量操作') }}</div>
             <q-btn
               :disable="rowSelection.length === 0"
               class="col-auto"
               color="primary"
-              :label="tc('删除')"
-              no-caps
-              dense
-            />
-            <q-btn
-              :disable="rowSelection.length === 0"
-              class="col-auto"
-              color="primary"
-              :label="tc('导出为csv文件')"
+              flat
+              :label="tc('导出')"
               no-caps
               dense
               @click="exportTable"
@@ -608,96 +614,6 @@ const exportTable = () => {
 
           </q-td>
 
-          <!--          <q-td key="resourceType" :props="props">-->
-
-          <!--            <div v-if="props.row.app_service?.category === 'vms-server'"-->
-          <!--                 class="column items-center"-->
-          <!--            >-->
-          <!--              <q-icon-->
-          <!--                class="col"-->
-          <!--                name="computer"-->
-          <!--                color="primary"-->
-          <!--                size="md"-->
-          <!--              />-->
-          <!--              <div class="col">-->
-          <!--                {{ tc('云主机') }}-->
-          <!--              </div>-->
-          <!--            </div>-->
-
-          <!--            <div v-if="props.row.app_service?.category === 'vms-object'"-->
-          <!--                 class="column items-center"-->
-          <!--            >-->
-          <!--              <q-icon-->
-          <!--                class="col"-->
-          <!--                name="mdi-database"-->
-          <!--                color="primary"-->
-          <!--                size="md"-->
-          <!--              />-->
-          <!--              <div class="col">-->
-          <!--                {{ tc('对象存储') }}-->
-          <!--              </div>-->
-          <!--            </div>-->
-
-          <!--            <div v-if="props.row.app_service?.category === 'hpc'"-->
-          <!--                 class="column items-center"-->
-          <!--            >-->
-          <!--              <q-icon-->
-          <!--                class="col"-->
-          <!--                name="mdi-rocket-launch"-->
-          <!--                color="primary"-->
-          <!--                size="md"-->
-          <!--              />-->
-          <!--              <div class="col">-->
-          <!--                {{ tc('高性能计算') }}-->
-          <!--              </div>-->
-          <!--            </div>-->
-
-          <!--            <div v-if="props.row.app_service?.category === 'high-cloud'"-->
-          <!--                 class="column items-center"-->
-          <!--            >-->
-          <!--              <q-icon-->
-          <!--                class="col"-->
-          <!--                name="mdi-security"-->
-          <!--                color="primary"-->
-          <!--                size="md"-->
-          <!--              />-->
-          <!--              <div class="col">-->
-          <!--                {{ tc('高等级云') }}-->
-          <!--              </div>-->
-          <!--            </div>-->
-
-          <!--            <div v-if="props.row.app_service?.category === 'other'"-->
-          <!--                 class="column items-center"-->
-          <!--            >-->
-          <!--              <q-icon-->
-          <!--                class="col"-->
-          <!--                name="mdi-help-circle-outline"-->
-          <!--                color="primary"-->
-          <!--                size="md"-->
-          <!--              />-->
-          <!--              <div class="col">-->
-          <!--                {{ tc('其它') }}-->
-          <!--              </div>-->
-          <!--            </div>-->
-
-          <!--          </q-td>-->
-
-          <q-td key="redeemer" :props="props">
-            {{ props.row.user?.username || tc('未知') }}
-          </q-td>
-
-          <q-td key="redeemTime" :props="props">
-            <div v-if="i18n.global.locale==='zh'">
-              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
-              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
-            </div>
-
-            <div v-else>
-              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
-              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
-            </div>
-          </q-td>
-
           <q-td key="validTime" :props="props">
             <div class="row items-center justify-center">
 
@@ -731,6 +647,28 @@ const exportTable = () => {
 
             </div>
 
+          </q-td>
+
+          <q-td key="redeemer" :props="props">
+            {{ props.row.user?.username || tc('未知') }}
+          </q-td>
+
+          <q-td key="redeemTime" :props="props">
+            <div v-if="props.row.granted_time === null">
+              {{ tc('未知') }}
+            </div>
+
+            <div v-else>
+              <div v-if="i18n.global.locale==='zh'">
+                <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+                <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+              </div>
+
+              <div v-else>
+                <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+                <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+              </div>
+            </div>
           </q-td>
 
           <q-td key="balance" :props="props">
@@ -796,26 +734,15 @@ const exportTable = () => {
             </q-btn>
           </q-td>
 
-          <!--          <q-td key="creation" :props="props">-->
-          <!--            &lt;!&ndash;            <div v-if="i18n.global.locale==='zh'">&ndash;&gt;-->
-          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>&ndash;&gt;-->
-          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>&ndash;&gt;-->
-          <!--            &lt;!&ndash;            </div>&ndash;&gt;-->
-
-          <!--            &lt;!&ndash;            <div v-else>&ndash;&gt;-->
-          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>&ndash;&gt;-->
-          <!--            &lt;!&ndash;              <div>{{ new Date(props.row.creation_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>&ndash;&gt;-->
-          <!--            &lt;!&ndash;            </div>&ndash;&gt;-->
-          <!--          </q-td>-->
-
           <q-td key="operation" :props="props">
-            <q-btn flat dense no-caps color="primary">
-              删除
+            <q-btn
+              flat
+              dense
+              no-caps
+              color="primary"
+              @click="delVoucherAdmin(props.row)">
+              {{ tc('删除') }}
             </q-btn>
-
-            <!--            <q-btn flat dense no-caps color="primary" @click="stopServer(props.row)">-->
-            <!--              关机-->
-            <!--            </q-btn>-->
           </q-td>
 
         </q-tr>

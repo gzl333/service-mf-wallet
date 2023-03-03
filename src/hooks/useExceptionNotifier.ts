@@ -32,7 +32,9 @@ export default function () {
           multiLine: false
         })
       }
+    } else {
+      // other kind of exceptions
+      console.error(exception)
     }
-    // other kind of exceptions
   }
 }

@@ -141,7 +141,7 @@ const onOKClick = async () => {
   // 创建代金券
   try {
     // req： 同时发出多个网络请求，并等待所有成功结果
-    void await Promise.all([...Array(Number(amount.value))].map(() => api.wallet.admin.postAdminCashcoupon({
+    void await Promise.all([...Array(Number(amount.value))].map(() => api.wallet.admin.postAdminCashCoupon({
       body: {
         face_value: denomination.value.toString(),
         effective_time: startDateTimeStr.value,

@@ -53,7 +53,7 @@ const activeTab = ref(store.items.currentPath[1]) // keep selection when reloadi
                       no-caps
                       class="q-px-none q-py-md q-mr-md"
                       name="personal"
-                      icon="format_list_bulleted"
+                      icon="mdi-account"
                       :label="tc('个人代金券')"
                       :ripple="false"
                       @click="activeTab = 'personal'; navigateToUrl('/my/wallet/voucher/personal')"
@@ -62,7 +62,7 @@ const activeTab = ref(store.items.currentPath[1]) // keep selection when reloadi
                       no-caps
                       class="q-px-none q-py-md q-mr-md"
                       name="group"
-                      icon="request_quote"
+                      icon="mdi-account-multiple"
                       :label="tc('项目组代金券')"
                       :ripple="false"
                       @click="activeTab = 'group'; navigateToUrl('/my/wallet/voucher/group')"

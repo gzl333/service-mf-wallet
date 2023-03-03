@@ -223,6 +223,14 @@ const columns = computed(() => [
     headerStyle: 'padding: 0 2px'
   },
   {
+    name: 'validTime',
+    label: (() => tc('有效期'))(),
+    align: 'center',
+    classes: 'ellipsis',
+    style: 'padding: 15px 0px',
+    headerStyle: 'padding: 0 2px'
+  },
+  {
     name: 'redeemer',
     label: (() => tc('兑换者'))(),
     align: 'center',
@@ -233,14 +241,6 @@ const columns = computed(() => [
   {
     name: 'redeemTime',
     label: (() => tc('兑换日期'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px',
-    headerStyle: 'padding: 0 2px'
-  },
-  {
-    name: 'validTime',
-    label: (() => tc('有效期'))(),
     align: 'center',
     classes: 'ellipsis',
     style: 'padding: 15px 0px',
@@ -269,6 +269,18 @@ const clearRowSelection = () => {
   rowSelection.value = []
 }
 
+// 删除代金券
+const delVoucher = async (voucher: VoucherInterface) => {
+  // 调用dialog, 拿到事件hooks
+  const { onOk } = await store.triggerDeleteVoucherDialog(voucher)
+  // 用hooks注册对应状态的回调函数
+  onOk((isSuccess: boolean) => {
+    // 如果删除成功，就重新搜索，获取最新列表
+    if (isSuccess) {
+      loadRows()
+    }
+  })
+}
 </script>
 
 <template>
@@ -482,23 +494,25 @@ const clearRowSelection = () => {
 
         <div class="row full-width items-center justify-between">
 
-          <div v-if="pagination.count" class="col-auto row items-center">
+          <div class="col-auto row items-center">
+            <div v-if="pagination.count" class="col-auto row items-center">
+              <div class="text-grey">{{ tc('选中') }}</div>
+              <div class="">{{ rowSelection.length }}</div>
+              <div class="q-px-xs">/</div>
+            </div>
 
-            <div class="text-grey">{{ tc('选中') }}</div>
-            <div class="">{{ rowSelection.length }}</div>
-            <div class="q-px-xs">/</div>
             <div class="col-auto text-grey">{{ tc('搜索总计') }}</div>
             <div class="col-auto ">{{ pagination.count }}</div>
-
           </div>
 
           <div class="col-auto row items-center q-gutter-x-xs">
-            <div class="col-auto text-grey">批量操作</div>
+            <div class="col-auto text-grey">{{tc('批量操作')}}</div>
             <q-btn
               :disable="rowSelection.length === 0"
               class="col-auto"
               color="primary"
-              :label="tc('删除')"
+              :label="tc('导出')"
+              flat
               no-caps
               dense
             />
@@ -612,22 +626,6 @@ const clearRowSelection = () => {
             </div>
           </q-td>
 
-          <q-td key="redeemer" :props="props">
-            {{ props.row.user?.username || tc('未知') }}
-          </q-td>
-
-          <q-td key="redeemTime" :props="props">
-            <div v-if="i18n.global.locale==='zh'">
-              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
-              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
-            </div>
-
-            <div v-else>
-              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
-              <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
-            </div>
-          </q-td>
-
           <q-td key="validTime" :props="props">
             <div class="row items-center justify-center">
 
@@ -659,6 +657,29 @@ const clearRowSelection = () => {
                 </div>
               </div>
 
+            </div>
+          </q-td>
+
+          <q-td key="redeemer" :props="props">
+            {{ props.row.user?.username || tc('未知') }}
+          </q-td>
+
+          <q-td key="redeemTime" :props="props">
+
+            <div v-if="props.row.granted_time === null">
+              {{ tc('尚未兑换') }}
+            </div>
+
+            <div v-else>
+              <div v-if="i18n.global.locale==='zh'">
+                <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[0] }}</div>
+                <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(' ')[1] }}</div>
+              </div>
+
+              <div v-else>
+                <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[0] }}</div>
+                <div>{{ new Date(props.row.granted_time).toLocaleString(i18n.global.locale).split(',')[1] }}</div>
+              </div>
             </div>
 
           </q-td>
@@ -711,16 +732,16 @@ const clearRowSelection = () => {
           <q-td key="operation" :props="props">
 
             <div class="column">
-              <q-btn flat dense no-caps color="primary">
-                {{ tc('查看明细') }}
-              </q-btn>
+              <!--              <q-btn flat dense no-caps color="primary">-->
+              <!--                {{ tc('查看明细') }}-->
+              <!--              </q-btn>-->
 
               <q-btn
                 flat
                 dense
                 no-caps
                 color="primary"
-              @click="store.triggerDeleteVoucherDialog(props.row.id)">
+                @click="delVoucher(props.row)">
                 {{ tc('删除') }}
               </q-btn>
             </div>

@@ -14,7 +14,7 @@ export default {
     }
   },
   admin: {
-    getAdminCashcoupon (payload?: {
+    getAdminCashCoupon (payload?: {
       query?: {
         page?: number
         page_size?: number
@@ -29,7 +29,7 @@ export default {
       }
       return axiosWallet.get('/admin/cashcoupon', config)
     },
-    postAdminCashcoupon (payload: {
+    postAdminCashCoupon (payload: {
       body: {
         face_value: string
         effective_time?: string
@@ -40,6 +40,34 @@ export default {
     }) {
       const data = payload.body
       return axiosWallet.post('/admin/cashcoupon', data)
+    },
+    getAdminCashCouponId (payload: {
+      path: {
+        id: string
+      }
+    }) {
+      return axiosWallet.get('/admin/cashcoupon/' + payload.path.id)
+    },
+    deleteAdminCashCouponId (payload: {
+      path: {
+        id: string
+      }
+    }) {
+      return axiosWallet.delete('/admin/cashcoupon/' + payload.path.id)
+    },
+    getAdminCashCouponIdPayment (payload: {
+      query?: {
+        page?: number
+        page_size?: number
+      },
+      path: {
+        id: string
+      }
+    }) {
+      const config = {
+        params: payload?.query
+      }
+      return axiosWallet.get('/admin/cashcoupon/' + payload.path.id + '/payment', config)
     }
   },
   cashcoupon: {
@@ -49,7 +77,7 @@ export default {
         page_size?: number,
         app_service_id?: string,
         vo_id?: string,
-        available?: string,
+        valid?: boolean
         app_service_category?: 'vms-server' | 'vms-object' | 'high-cloud' | 'hpc' | 'other'
       }
     }) {
@@ -93,6 +121,13 @@ export default {
         params: payload?.query
       }
       return axiosWallet.delete('/cashcoupon/' + payload.path.id, config)
+    },
+    getCashCouponId (payload: {
+      path: {
+        id: string
+      }
+    }) {
+      return axiosWallet.get('/cashcoupon/' + payload.path.id)
     },
     getCashCouponPayment (payload: {
       path: {

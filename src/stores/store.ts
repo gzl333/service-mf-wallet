@@ -127,7 +127,7 @@ export interface VoucherInterface {
     id: string
     username: string
   },
-  vo: Record<string, unknown>
+  vo: Record<string, unknown> | null
   activity: Record<string, unknown>
   exchange_code: string
 }
@@ -684,11 +684,12 @@ export const useStore = defineStore('wallet', {
         }
       })
     },
-    triggerDeleteVoucherDialog (voucherId: string) {
-      Dialog.create({
+    async triggerDeleteVoucherDialog (voucher: VoucherInterface, isAdmin?: boolean) {
+      return Dialog.create({
         component: DeleteVoucherDialog,
         componentProps: {
-          voucherId
+          voucher,
+          isAdmin
         }
       })
     },
