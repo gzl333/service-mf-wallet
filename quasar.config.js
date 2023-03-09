@@ -94,7 +94,9 @@ module.exports = configure(function (ctx) {
         cfg.output = {
           // @mimas: https://single-spa.js.org/docs/recommended-setup/#build-tools-webpack--rollup
           libraryTarget: 'system',
-          chunkLoadingGlobal: `webpackJsonp_${name}`, // @mimas: not sure what this is
+          // @mimas: the variable that distinguish each micro-app's chunking results. Sharing the same variable will cause booting issues for single-spa.
+          // see https://zhuanlan.zhihu.com/p/415900889?utm_medium=social&utm_oi=682743049231273984
+          chunkLoadingGlobal: `webpackJsonp_${name}`,
           publicPath: `${name}`, // @mimas: publicPath needs an initial value, but will be changed on the fly by 'systemjs-webpack-interop'
           path: resolve(__dirname, 'dist/wallet') // @mimas: where to put all files but index.html (which goes with the distDir setting)
         }
