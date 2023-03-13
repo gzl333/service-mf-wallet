@@ -281,15 +281,22 @@ export const useStore = defineStore('wallet', {
     getAppServiceOptions: state => (isAdmin?: boolean, isWithAll?: boolean) => {
       // 选择用哪个table
       const currentTable = isAdmin ? state.tables.appServiceAdminTable : state.tables.appServiceTable
-      // 建立options
-      const appServices = currentTable.allIds.map(appServiceId => {
-        const appService = currentTable.byId[appServiceId]
-        return {
-          value: appService.id,
-          label: appService.name,
-          labelEn: appService.name_en
-        }
-      })
+
+      const appServices = currentTable.allIds
+        // 筛选appService的状态
+        .filter(appServiceId => {
+          const appService = currentTable.byId[appServiceId]
+          return appService.status === 'normal'
+        })
+        // 建立options
+        .map(appServiceId => {
+          const appService = currentTable.byId[appServiceId]
+          return {
+            value: appService.id,
+            label: appService.name,
+            labelEn: appService.name_en
+          }
+        })
       // 根据category排序
       appServices.sort((a, b) => {
         const appServiceA = currentTable.byId[a.value]
