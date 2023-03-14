@@ -501,7 +501,7 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
 
             <q-chip v-if="props.row.status === 'available'"
                     style="width: 80px;"
-                    color="light-green"
+                    color="green"
                     text-color="white"
                     icon="done">
               <div class="row justify-center">
@@ -647,6 +647,28 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
 
             </div>
 
+            <div class="row items-center justify-center">
+
+              <q-badge
+                v-if="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0)"
+                color="green">
+                {{ tc('有效期内')}}
+              </q-badge>
+
+              <q-badge
+                v-if="(new Date() - new Date(props.row.expiration_time)) > 0"
+                color="negative">
+                {{ tc('已过期')}}
+              </q-badge>
+
+              <q-badge
+                v-if="(new Date(props.row.effective_time) - new Date()) > 0"
+                color="primary">
+                {{ tc('待生效')}}
+              </q-badge>
+
+            </div>
+
           </q-td>
 
           <q-td key="redeemer" :props="props">
@@ -682,10 +704,12 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
                 show-value
                 size="90px"
                 :thickness="0.22"
-                color="green"
+                :color="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'green' : 'grey-5'"
                 track-color="grey-3"
               >
-                <div class="text-caption text-green">
+                <div class="text-caption"
+                     :class="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'text-green' : ''">
+
                   {{ (Number(props.row.balance) / Number(props.row.face_value) * 100).toFixed(2) }}%
                 </div>
               </q-knob>
@@ -696,7 +720,8 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
                   <div class="col-auto text-grey">
                     {{ tc('当前余额') }}
                   </div>
-                  <div class="col-auto text-green">
+                  <div class="col-auto text-weight-bold"
+                       :class="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'text-green' : ''">
                     {{ props.row.balance }}
                   </div>
                 </div>
@@ -705,7 +730,8 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
                   <div class="col-auto text-grey">
                     {{ tc('原始面额') }}
                   </div>
-                  <div class="col-auto text-green">
+                  <div class="col-auto text-weight-bold"
+                       :class="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'text-green' : ''">
                     {{ props.row.face_value }}
                   </div>
                 </div>

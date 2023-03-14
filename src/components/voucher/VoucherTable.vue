@@ -658,6 +658,29 @@ const delVoucher = async (voucher: VoucherInterface) => {
               </div>
 
             </div>
+
+            <div class="row items-center justify-center">
+
+              <q-badge
+                v-if="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0)"
+                color="green">
+                {{ tc('有效期内')}}
+              </q-badge>
+
+              <q-badge
+                v-if="(new Date() - new Date(props.row.expiration_time)) > 0"
+                color="negative">
+               {{ tc('已过期')}}
+              </q-badge>
+
+              <q-badge
+                v-if="(new Date(props.row.effective_time) - new Date()) > 0"
+                color="primary">
+                {{ tc('待生效')}}
+              </q-badge>
+
+            </div>
+
           </q-td>
 
           <q-td key="redeemer" :props="props">
@@ -695,10 +718,11 @@ const delVoucher = async (voucher: VoucherInterface) => {
                 show-value
                 size="90px"
                 :thickness="0.22"
-                color="green"
+                :color="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'green' : 'grey-5'"
                 track-color="grey-3"
               >
-                <div class="text-caption text-green">
+                <div class="text-caption"
+                     :class="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'text-green' : ''">
                   {{ (Number(props.row.balance) / Number(props.row.face_value) * 100).toFixed(2) }}%
                 </div>
               </q-knob>
@@ -709,7 +733,8 @@ const delVoucher = async (voucher: VoucherInterface) => {
                   <div class="col-auto text-grey">
                     {{ tc('当前余额') }}
                   </div>
-                  <div class="col-auto text-green">
+                  <div class="col-auto text-weight-bold"
+                       :class="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'text-green' : ''">
                     {{ props.row.balance }}
                   </div>
                 </div>
@@ -718,7 +743,8 @@ const delVoucher = async (voucher: VoucherInterface) => {
                   <div class="col-auto text-grey">
                     {{ tc('原始面额') }}
                   </div>
-                  <div class="col-auto text-green">
+                  <div class="col-auto text-weight-bold"
+                       :class="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'text-green' : ''">
                     {{ props.row.face_value }}
                   </div>
                 </div>
@@ -737,7 +763,7 @@ const delVoucher = async (voucher: VoucherInterface) => {
               <!--                {{ tc('查看明细') }}-->
               <!--              </q-btn>-->
 
-              <q-btn v-if="props.row.app_service?.category === 'vms-server'"
+              <q-btn v-if="props.row.app_service?.category === 'vms-server' && ((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0)"
                      flat
                      no-caps
                      dense
@@ -747,7 +773,7 @@ const delVoucher = async (voucher: VoucherInterface) => {
                 {{ tc('创建云主机') }}
               </q-btn>
 
-              <q-btn v-if="props.row.app_service?.category === 'vms-object'"
+              <q-btn v-if="props.row.app_service?.category === 'vms-object' && ((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0)"
                      flat
                      no-caps
                      dense
