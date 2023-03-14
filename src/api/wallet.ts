@@ -73,10 +73,10 @@ export default {
   cashcoupon: {
     getCashCoupon (payload?: {
       query?: {
-        page?: number,
-        page_size?: number,
-        app_service_id?: string,
-        vo_id?: string,
+        page?: number
+        page_size?: number
+        app_service_id?: string
+        vo_id?: string
         valid?: boolean
         app_service_category?: 'vms-server' | 'vms-object' | 'high-cloud' | 'hpc' | 'other'
       }

@@ -111,12 +111,12 @@ const statusOptions = computed(() => [
     labelEn: 'All Status'
   },
   {
-    value: 'valid',
+    value: true,
     label: '有效期内',
     labelEn: 'Valid'
   }
 ])
-const statusSelection = ref<'all' | 'valid' | 'invalid'>('all')
+const statusSelection = ref<'all' | boolean>('all')
 
 // table loading status
 const isLoading = ref(false)
@@ -157,7 +157,7 @@ const loadRows = async () => {
         page_size: pagination.value.rowsPerPage,
         ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id }),
         ...(props.isGroup && { vo_id: groupSelection.value }),
-        ...(statusSelection.value !== 'all' && { available: 'true' }),
+        ...(statusSelection.value !== 'all' && { valid: statusSelection.value }),
         ...(typeSelection.value !== 'all' && { app_service_category: typeSelection.value })
       }
     })
