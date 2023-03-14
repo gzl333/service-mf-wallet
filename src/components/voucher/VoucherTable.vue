@@ -580,45 +580,70 @@ const delVoucher = async (voucher: VoucherInterface) => {
           <q-td key="serviceNode" :props="props">
             <div class="column items-center">
 
-              <q-icon
-                v-if="props.row.app_service?.category === 'vms-server'"
-                class="col"
-                name="computer"
-                color="primary"
-                size="md"
-              />
+              <div v-if="props.row.app_service?.category === 'vms-server'"
+                   class="column items-center">
+                <q-icon
+                  class="col"
+                  name="computer"
+                  color="primary"
+                  size="md"
+                />
+                <div class="col">
+                  {{ tc('云主机') }}
+                </div>
+              </div>
 
-              <q-icon
-                v-if="props.row.app_service?.category === 'vms-object'"
-                class="col"
-                name="mdi-database"
-                color="primary"
-                size="md"
-              />
+              <div v-if="props.row.app_service?.category === 'vms-object'"
+                   class="column items-center">
+                <q-icon
+                  class="col"
+                  name="mdi-database"
+                  color="primary"
+                  size="md"
+                />
+                <div class="col">
+                  {{ tc('对象存储') }}
+                </div>
+              </div>
 
-              <q-icon
-                v-if="props.row.app_service?.category === 'hpc'"
-                class="col"
-                name="mdi-rocket-launch"
-                color="primary"
-                size="md"
-              />
+              <div v-if="props.row.app_service?.category === 'hpc'"
+                   class="column items-center">
+                <q-icon
+                  class="col"
+                  name="mdi-rocket-launch"
+                  color="primary"
+                  size="md"
+                />
+                <div class="col">
+                  {{ tc('高性能计算') }}
+                </div>
+              </div>
 
-              <q-icon
-                v-if="props.row.app_service?.category === 'high-cloud'"
-                class="col"
-                name="mdi-security"
-                color="primary"
-                size="md"
-              />
+              <div v-if="props.row.app_service?.category === 'high-cloud'"
+                   class="column items-center">
+                <q-icon
+                  class="col"
+                  name="mdi-security"
+                  color="primary"
+                  size="md"
+                />
+                <div class="col">
+                  {{ tc('高等级云') }}
+                </div>
+              </div>
 
-              <q-icon
-                v-if="props.row.app_service?.category === 'other'"
-                class="col"
-                name="mdi-help-circle-outline"
-                color="primary"
-                size="md"
-              />
+              <div v-if="props.row.app_service?.category === 'other'"
+                   class="column items-center">
+                <q-icon
+                  class="col"
+                  name="mdi-help-circle-outline"
+                  color="primary"
+                  size="md"
+                />
+                <div class="col">
+                  {{ tc('其它资源') }}
+                </div>
+              </div>
 
               <div class="col">
                 {{ i18n.global.locale === 'zh' ? props.row.app_service?.name : props.row.app_service?.name_en }}
