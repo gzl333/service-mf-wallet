@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, /*  PropType, */ onMounted } from 'vue'
-// import { navigateToUrl } from 'single-spa'
+import { navigateToUrl } from 'single-spa'
 import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
@@ -732,18 +732,41 @@ const delVoucher = async (voucher: VoucherInterface) => {
           <q-td key="operation" :props="props">
 
             <div class="column">
+
               <!--              <q-btn flat dense no-caps color="primary">-->
               <!--                {{ tc('查看明细') }}-->
               <!--              </q-btn>-->
+
+              <q-btn v-if="props.row.app_service?.category === 'vms-server'"
+                     flat
+                     no-caps
+                     dense
+                     padding="none"
+                     color="primary"
+                     @click="navigateToUrl('/my/server/deploy?service=' + props.row.app_service.service_id + (isGroup ? ('&group=' + props.row.vo?.id) : ''))">
+                {{ tc('创建云主机') }}
+              </q-btn>
+
+              <q-btn v-if="props.row.app_service?.category === 'vms-object'"
+                     flat
+                     no-caps
+                     dense
+                     padding="none"
+                     color="primary"
+                     @click="navigateToUrl('/my/storage')">
+                {{ tc('使用对象存储') }}
+              </q-btn>
 
               <q-btn
                 flat
                 dense
                 no-caps
+                padding="none"
                 color="primary"
                 @click="delVoucher(props.row)">
-                {{ tc('删除') }}
+                {{ tc('删除代金券') }}
               </q-btn>
+
             </div>
           </q-td>
 
