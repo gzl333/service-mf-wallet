@@ -129,6 +129,7 @@ export interface VoucherInterface {
   },
   vo: Record<string, unknown> | null
   activity: Record<string, unknown>
+  issuer: string
   exchange_code: string
 }
 

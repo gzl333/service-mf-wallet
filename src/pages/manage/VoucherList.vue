@@ -48,12 +48,12 @@ const rows = ref<VoucherInterface[]>()
 const serviceOptions = computed(() => store.getAppServiceOptions(true, true))
 const serviceSelection = ref('all')
 
-// 筛选代金券状态
+// 筛选兑换状态
 const statusOptions = computed(() => [
   {
     value: 'all',
-    label: '全部状态',
-    labelEn: 'All Status'
+    label: '全部兑换状态',
+    labelEn: 'All Redeem Status'
   },
   {
     value: 'wait',
@@ -68,7 +68,7 @@ const statusOptions = computed(() => [
   {
     value: 'cancelled',
     label: '已取消',
-    labelEn: 'Invalid'
+    labelEn: 'Cancelled'
   },
   {
     value: 'deleted',
@@ -77,6 +77,67 @@ const statusOptions = computed(() => [
   }
 ])
 const statusSelection = ref<'all' | 'wait' | 'available' | 'cancelled' | 'deleted'>('all')
+
+// 筛选有效期
+const validOptions = computed(() => [
+  {
+    value: 'all',
+    label: '全部有效期',
+    labelEn: 'All Validity Status'
+  },
+  {
+    value: 'valid',
+    label: '有效期内',
+    labelEn: 'Valid'
+  },
+  {
+    value: 'notyet',
+    label: '待生效',
+    labelEn: 'Pending'
+  },
+  {
+    value: 'expired',
+    label: '已过期',
+    labelEn: 'Expired'
+  }
+])
+const validSelection = ref<'all' | 'notyet' | 'valid' | 'expired'>('all')
+
+// 筛选issuer
+const issuerOptions = computed(() => [
+  {
+    value: 'all',
+    label: `${tc('全部发放者')}`
+  },
+  // {
+  //   value: 'username',
+  //   label: `${tc('用户名关键字')}`
+  // },
+  {
+    value: 'user-id',
+    label: `${tc('用户ID')}`
+  }
+])
+const issuerSelection = ref('all')
+const issuerInput = ref('')
+
+// 筛选redeemer
+const redeemerOptions = computed(() => [
+  {
+    value: 'all',
+    label: `${tc('全部兑换者')}`
+  },
+  // {
+  //   value: 'username',
+  //   label: `${tc('用户名关键字')}`
+  // },
+  {
+    value: 'user-id',
+    label: `${tc('用户ID')}`
+  }
+])
+const redeemerSelection = ref('all')
+const redeemerInput = ref('')
 
 // 根据当前搜索条件，更新rows，并更新count值
 const loadRows = async () => {
@@ -89,7 +150,10 @@ const loadRows = async () => {
         page: pagination.value.page,
         page_size: pagination.value.rowsPerPage,
         ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id }), // id -> pay_app_service_id
-        ...(statusSelection.value !== 'all' && { status: statusSelection.value })
+        ...(statusSelection.value !== 'all' && { status: statusSelection.value }),
+        ...(validSelection.value !== 'all' && { valid_status: validSelection.value }),
+        ...(issuerSelection.value !== 'all' && { issuer: issuerInput.value }),
+        ...(redeemerSelection.value !== 'all' && { redeemer: redeemerInput.value })
       }
     })
     // 拿到rows值，给table用
@@ -126,14 +190,14 @@ onMounted(loadRows)
 
 // 分栏定义
 const columns = computed(() => [
-  {
-    name: 'status',
-    label: (() => tc('兑换状态'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px',
-    headerStyle: 'padding: 0 2px'
-  },
+  // {
+  //   name: 'status',
+  //   label: (() => tc('兑换状态'))(),
+  //   align: 'center',
+  //   classes: 'ellipsis',
+  //   style: 'padding: 15px 0px',
+  //   headerStyle: 'padding: 0 2px'
+  // },
   {
     name: 'id',
     label: (() => tc('代金券ID'))(),
@@ -150,14 +214,14 @@ const columns = computed(() => [
     style: 'padding: 15px 0px; min-width: 150px; max-width: 250px; word-break: break-all; word-wrap: break-word; white-space: normal;',
     headerStyle: 'padding: 0 2px'
   },
-  // {
-  //   name: 'resourceType',
-  //   label: (() => tc('资源种类'))(),
-  //   align: 'center',
-  //   classes: 'ellipsis',
-  //   headerStyle: 'padding: 0 0 0 1px',
-  //   style: 'padding: 15px 0px; min-width: 80px; max-width: 100px; word-break: break-all; word-wrap: break-word; white-space: normal;'
-  // },
+  {
+    name: 'issuer',
+    label: (() => tc('发放者'))(),
+    align: 'center',
+    classes: 'ellipsis',
+    style: 'padding: 15px 0px',
+    headerStyle: 'padding: 0 2px'
+  },
   {
     name: 'validTime',
     label: (() => tc('有效期'))(),
@@ -297,118 +361,221 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
           </q-btn>
         </div>
 
-        <div class="col row q-gutter-x-md">
-          <q-select class="col-auto"
-                    style="min-width: 170px; max-width: 300px;"
-                    :label-color="serviceSelection !== 'all' ? 'primary' : ''"
-                    outlined
-                    dense
-                    stack-label
-                    :label="tc('筛选服务单元')"
-                    v-model="serviceSelection"
-                    :options="serviceOptions"
-                    emit-value
-                    map-options
-                    option-value="value"
-                    :option-label="i18n.global.locale ==='zh'? 'label':'labelEn'">
-            <!--当前选项的内容插槽-->
-            <!--          <template v-slot:selected-item="scope">-->
-            <!--                <span :class="serviceSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
-            <!--                  {{ i18n.global.locale === 'zh' ? scope.opt.label : scope.opt.labelEn }}-->
-            <!--                </span>-->
-            <!--          </template>-->
+        <div class="col">
+          <div class="row q-gutter-md q-mb-sm">
+            <q-select class="col-auto"
+                      style="min-width: 170px; max-width: 300px;"
+                      :label-color="serviceSelection !== 'all' ? 'primary' : ''"
+                      outlined
+                      dense
+                      stack-label
+                      :label="tc('筛选服务单元')"
+                      v-model="serviceSelection"
+                      :options="serviceOptions"
+                      emit-value
+                      map-options
+                      option-value="value"
+                      :option-label="i18n.global.locale ==='zh'? 'label':'labelEn'">
+              <!--当前选项的内容插槽-->
+              <!--          <template v-slot:selected-item="scope">-->
+              <!--                <span :class="serviceSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
+              <!--                  {{ i18n.global.locale === 'zh' ? scope.opt.label : scope.opt.labelEn }}-->
+              <!--                </span>-->
+              <!--          </template>-->
 
-            <template v-slot:option="scope">
-              <q-item v-bind="scope.itemProps">
-                <!--                <q-tooltip>-->
-                <!--                  <div v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'">-->
-                <!--                    服务单元运行中-->
-                <!--                  </div>-->
-                <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'">-->
-                <!--                    服务单元暂停服务-->
-                <!--                  </div>-->
-                <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'">-->
-                <!--                    服务单元已删除-->
-                <!--                  </div>-->
-                <!--                  <div v-else>-->
-                <!--                    全部服务单元-->
-                <!--                  </div>-->
-                <!--                </q-tooltip>-->
-                <!--                <q-item-section thumbnail>-->
-                <!--                  <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'"-->
-                <!--                          color="light-green"-->
-                <!--                          name="play_arrow"/>-->
-                <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'"-->
-                <!--                          color="red"-->
-                <!--                          name="pause"/>-->
-                <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'"-->
-                <!--                          color="black"-->
-                <!--                          name="clear"/>-->
-                <!--                  <q-icon v-else color="primary" name="done_all"/>-->
-                <!--                </q-item-section>-->
-                <q-item-section>
-                  <q-item-label class="row items-center">
-                    <q-icon v-if="scope.opt.value === 'all'"
-                            class="col-auto"
-                            color="primary"
-                            size="sm"
-                            name="mdi-check-all"/>
-                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-server'"
-                            class="col-auto"
-                            color="primary"
-                            size="sm"
-                            name="computer"/>
-                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-object'"
-                            class="col-auto"
-                            color="primary"
-                            size="sm"
-                            name="mdi-database"/>
-                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'high-cloud'"
-                            class="col-auto"
-                            color="primary"
-                            size="sm"
-                            name="mdi-security"/>
-                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'hpc'"
-                            class="col-auto"
-                            color="primary"
-                            size="sm"
-                            name="mdi-rocket-launch"/>
-                    <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'other'"
-                            class="col-auto"
-                            color="primary"
-                            size="sm"
-                            name="mdi-help-circle-outline"/>
-                    <div class="col-auto">
-                      {{ i18n.global.locale === 'zh' ? scope.opt.label : scope.opt.labelEn }}
-                    </div>
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
-            </template>
+              <template v-slot:option="scope">
+                <q-item v-bind="scope.itemProps">
+                  <!--                <q-tooltip>-->
+                  <!--                  <div v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'">-->
+                  <!--                    服务单元运行中-->
+                  <!--                  </div>-->
+                  <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'">-->
+                  <!--                    服务单元暂停服务-->
+                  <!--                  </div>-->
+                  <!--                  <div v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'">-->
+                  <!--                    服务单元已删除-->
+                  <!--                  </div>-->
+                  <!--                  <div v-else>-->
+                  <!--                    全部服务单元-->
+                  <!--                  </div>-->
+                  <!--                </q-tooltip>-->
+                  <!--                <q-item-section thumbnail>-->
+                  <!--                  <q-icon v-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'enable'"-->
+                  <!--                          color="light-green"-->
+                  <!--                          name="play_arrow"/>-->
+                  <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'disable'"-->
+                  <!--                          color="red"-->
+                  <!--                          name="pause"/>-->
+                  <!--                  <q-icon v-else-if="store.tables.serviceTable.byId[scope.opt.value]?.status === 'deleted'"-->
+                  <!--                          color="black"-->
+                  <!--                          name="clear"/>-->
+                  <!--                  <q-icon v-else color="primary" name="done_all"/>-->
+                  <!--                </q-item-section>-->
+                  <q-item-section>
+                    <q-item-label class="row items-center">
+                      <q-icon v-if="scope.opt.value === 'all'"
+                              class="col-auto"
+                              color="primary"
+                              size="sm"
+                              name="mdi-check-all"/>
+                      <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-server'"
+                              class="col-auto"
+                              color="primary"
+                              size="sm"
+                              name="computer"/>
+                      <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'vms-object'"
+                              class="col-auto"
+                              color="primary"
+                              size="sm"
+                              name="mdi-database"/>
+                      <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'high-cloud'"
+                              class="col-auto"
+                              color="primary"
+                              size="sm"
+                              name="mdi-security"/>
+                      <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'hpc'"
+                              class="col-auto"
+                              color="primary"
+                              size="sm"
+                              name="mdi-rocket-launch"/>
+                      <q-icon v-if="store.tables.appServiceTable.byId[scope.opt.value]?.category === 'other'"
+                              class="col-auto"
+                              color="primary"
+                              size="sm"
+                              name="mdi-help-circle-outline"/>
+                      <div class="col-auto">
+                        {{ i18n.global.locale === 'zh' ? scope.opt.label : scope.opt.labelEn }}
+                      </div>
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+              </template>
 
-          </q-select>
+            </q-select>
 
-          <q-select class="col-auto"
-                    style="min-width: 170px;"
-                    :label-color="statusSelection !== 'all' ? 'primary' : ''"
-                    outlined
-                    dense
-                    stack-label
-                    :label="tc('筛选代金券状态')"
-                    v-model="statusSelection"
-                    :options="statusOptions"
-                    emit-value
-                    map-options
-                    option-value="value"
-                    :option-label="i18n.global.locale ==='zh'? 'label':'labelEn'"
-          >
-            <!--当前选项的内容插槽-->
-            <!--          <template v-slot:selected-item="scope">-->
-            <!--                <span :class="validSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
-            <!--                  {{ scope.opt.label }}-->
-            <!--                </span>-->
-            <!--          </template>-->
-          </q-select>
+            <q-select class="col-auto"
+                      style="min-width: 170px;"
+                      :label-color="statusSelection !== 'all' ? 'primary' : ''"
+                      outlined
+                      dense
+                      stack-label
+                      :label="tc('筛选兑换状态')"
+                      v-model="statusSelection"
+                      :options="statusOptions"
+                      emit-value
+                      map-options
+                      option-value="value"
+                      :option-label="i18n.global.locale ==='zh'? 'label':'labelEn'"
+            >
+              <!--当前选项的内容插槽-->
+              <!--          <template v-slot:selected-item="scope">-->
+              <!--                <span :class="validSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
+              <!--                  {{ scope.opt.label }}-->
+              <!--                </span>-->
+              <!--          </template>-->
+            </q-select>
+
+            <q-select class="col-auto"
+                      style="min-width: 170px;"
+                      :label-color="validSelection !== 'all' ? 'primary' : ''"
+                      outlined
+                      dense
+                      stack-label
+                      :label="tc('筛选有效期')"
+                      v-model="validSelection"
+                      :options="validOptions"
+                      emit-value
+                      map-options
+                      option-value="value"
+                      :option-label="i18n.global.locale ==='zh'? 'label':'labelEn'"
+            >
+              <!--当前选项的内容插槽-->
+              <!--          <template v-slot:selected-item="scope">-->
+              <!--                <span :class="validSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
+              <!--                  {{ scope.opt.label }}-->
+              <!--                </span>-->
+              <!--          </template>-->
+            </q-select>
+          </div>
+
+          <div class="row q-gutter-md">
+            <div class="col-auto row items-center no-wrap">
+              <q-select class="col-auto"
+                        style="min-width: 170px;"
+                        outlined
+                        dense
+                        stack-label
+                        :label="tc('筛选发放者')"
+                        :label-color="issuerInput ? 'primary' : ''"
+                        v-model="issuerSelection"
+                        :options="issuerOptions"
+                        emit-value
+                        map-options
+                        option-value="value"
+                        option-label="label"
+              >
+                <!--当前选项的内容插槽-->
+                <!--            <template v-slot:selected-item="scope">-->
+                <!--                <span :class="creatorSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
+                <!--                  {{ scope.opt.label }}-->
+                <!--                </span>-->
+                <!--            </template>-->
+              </q-select>
+
+              <q-input
+                style="width: 250px;"
+                v-if="issuerSelection !== 'all'"
+                :label-color="issuerInput ? 'primary' : ''"
+                v-model.trim="issuerInput"
+                outlined
+                dense
+                :label="issuerSelection==='username' ? tc('用户名关键字') : issuerSelection==='user-id' ? tc('准确的用户ID') : ''"
+                @keyup.enter="resetPageSelection();loadRows();clearRowSelection()"
+              >
+                <template v-slot:append v-if="issuerInput">
+                  <q-icon name="close" @click="issuerInput = ''" class="cursor-pointer"/>
+                </template>
+              </q-input>
+            </div>
+            <div class="col-auto row items-center no-wrap">
+              <q-select class="col-auto"
+                        style="min-width: 170px;"
+                        outlined
+                        dense
+                        stack-label
+                        :label="tc('筛选兑换者')"
+                        :label-color="redeemerInput ? 'primary' : ''"
+                        v-model="redeemerSelection"
+                        :options="redeemerOptions"
+                        emit-value
+                        map-options
+                        option-value="value"
+                        option-label="label"
+              >
+                <!--当前选项的内容插槽-->
+                <!--            <template v-slot:selected-item="scope">-->
+                <!--                <span :class="creatorSelection===scope.opt.value ? 'text-primary' : 'text-black'">-->
+                <!--                  {{ scope.opt.label }}-->
+                <!--                </span>-->
+                <!--            </template>-->
+              </q-select>
+
+              <q-input
+                style="width: 250px;"
+                v-if="redeemerSelection !== 'all'"
+                :label-color="redeemerInput ? 'primary' : ''"
+                v-model.trim="redeemerInput"
+                outlined
+                dense
+                :label="redeemerSelection==='username' ? tc('用户名关键字') : redeemerSelection==='user-id' ? tc('准确的用户ID') : ''"
+                @keyup.enter="resetPageSelection();loadRows();clearRowSelection()"
+              >
+                <template v-slot:append v-if="redeemerInput">
+                  <q-icon name="close" @click="redeemerInput = ''" class="cursor-pointer"/>
+                </template>
+              </q-input>
+            </div>
+          </div>
 
         </div>
 
@@ -488,47 +655,47 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
             <q-checkbox v-model="props.selected" dense size="xs"/>
           </q-td>
 
-          <q-td key="status" :props="props">
-            <q-chip v-if="props.row.status === 'wait'"
-                    style="width: 80px;"
-                    color="primary"
-                    text-color="white"
-                    icon="more_horiz">
-              <div class="row justify-center">
-                {{ tc('待兑换') }}
-              </div>
-            </q-chip>
+          <!--          <q-td key="status" :props="props">-->
+          <!--            <q-chip v-if="props.row.status === 'wait'"-->
+          <!--                    style="width: 80px;"-->
+          <!--                    color="primary"-->
+          <!--                    text-color="white"-->
+          <!--                    icon="more_horiz">-->
+          <!--              <div class="row justify-center">-->
+          <!--                {{ tc('待兑换') }}-->
+          <!--              </div>-->
+          <!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'available'"
-                    style="width: 80px;"
-                    color="green"
-                    text-color="white"
-                    icon="done">
-              <div class="row justify-center">
-                {{ tc('已兑换') }}
-              </div>
-            </q-chip>
+          <!--            <q-chip v-if="props.row.status === 'available'"-->
+          <!--                    style="width: 80px;"-->
+          <!--                    color="green"-->
+          <!--                    text-color="white"-->
+          <!--                    icon="done">-->
+          <!--              <div class="row justify-center">-->
+          <!--                {{ tc('已兑换') }}-->
+          <!--              </div>-->
+          <!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'cancelled'"
-                    style="width: 80px;"
-                    color="red"
-                    text-color="white"
-                    icon="close">
-              <div class="row justify-center">
-                {{ tc('已取消') }}
-              </div>
-            </q-chip>
+          <!--            <q-chip v-if="props.row.status === 'cancelled'"-->
+          <!--                    style="width: 80px;"-->
+          <!--                    color="red"-->
+          <!--                    text-color="white"-->
+          <!--                    icon="close">-->
+          <!--              <div class="row justify-center">-->
+          <!--                {{ tc('已取消') }}-->
+          <!--              </div>-->
+          <!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'deleted'"
-                    style="width: 80px;"
-                    color="grey"
-                    text-color="white"
-                    icon="delete_forever">
-              <div class="row justify-center">
-                {{ tc('已删除') }}
-              </div>
-            </q-chip>
-          </q-td>
+          <!--            <q-chip v-if="props.row.status === 'deleted'"-->
+          <!--                    style="width: 80px;"-->
+          <!--                    color="grey"-->
+          <!--                    text-color="white"-->
+          <!--                    icon="delete_forever">-->
+          <!--              <div class="row justify-center">-->
+          <!--                {{ tc('已删除') }}-->
+          <!--              </div>-->
+          <!--            </q-chip>-->
+          <!--          </q-td>-->
 
           <q-td key="id" :props="props">
             {{ props.row.id }}
@@ -614,6 +781,10 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
 
           </q-td>
 
+          <q-td key="issuer" :props="props">
+            {{ props.row.issuer || tc('未知') }}
+          </q-td>
+
           <q-td key="validTime" :props="props">
             <div class="row items-center justify-center">
 
@@ -652,19 +823,19 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
               <q-badge
                 v-if="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0)"
                 color="green">
-                {{ tc('有效期内')}}
+                {{ tc('有效期内') }}
               </q-badge>
 
               <q-badge
                 v-if="(new Date() - new Date(props.row.expiration_time)) > 0"
                 color="negative">
-                {{ tc('已过期')}}
+                {{ tc('已过期') }}
               </q-badge>
 
               <q-badge
                 v-if="(new Date(props.row.effective_time) - new Date()) > 0"
                 color="primary">
-                {{ tc('待生效')}}
+                {{ tc('待生效') }}
               </q-badge>
 
             </div>
@@ -672,7 +843,50 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
           </q-td>
 
           <q-td key="redeemer" :props="props">
-            {{ props.row.user?.username || tc('未知') }}
+            <div class="column items-center">
+              {{ props.row.user?.username || tc('未知') }}
+
+              <q-chip v-if="props.row.status === 'wait'"
+                      style="width: 80px;"
+                      color="primary"
+                      text-color="white"
+                      icon="more_horiz">
+                <div class="row justify-center">
+                  {{ tc('待兑换') }}
+                </div>
+              </q-chip>
+
+              <q-chip v-if="props.row.status === 'available'"
+                      style="width: 80px;"
+                      color="green"
+                      text-color="white"
+                      icon="done">
+                <div class="row justify-center">
+                  {{ tc('已兑换') }}
+                </div>
+              </q-chip>
+
+              <q-chip v-if="props.row.status === 'cancelled'"
+                      style="width: 80px;"
+                      color="red"
+                      text-color="white"
+                      icon="close">
+                <div class="row justify-center">
+                  {{ tc('已取消') }}
+                </div>
+              </q-chip>
+
+              <q-chip v-if="props.row.status === 'deleted'"
+                      style="width: 80px;"
+                      color="grey"
+                      text-color="white"
+                      icon="delete_forever">
+                <div class="row justify-center">
+                  {{ tc('已删除') }}
+                </div>
+              </q-chip>
+            </div>
+
           </q-td>
 
           <q-td key="redeemTime" :props="props">
@@ -702,7 +916,7 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
                 readonly
                 :model-value="Number(props.row.balance) / Number(props.row.face_value) * 100"
                 show-value
-                size="90px"
+                size="50px"
                 :thickness="0.22"
                 :color="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'green' : 'grey-5'"
                 track-color="grey-3"
@@ -710,7 +924,7 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
                 <div class="text-caption"
                      :class="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'text-green' : ''">
 
-                  {{ (Number(props.row.balance) / Number(props.row.face_value) * 100).toFixed(2) }}%
+                  {{ (Number(props.row.balance) / Number(props.row.face_value) * 100).toFixed(0) }}%
                 </div>
               </q-knob>
 
@@ -779,7 +993,7 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
           <div class="col row items-center justify-end text-grey">
             <q-select color="grey"
                       v-model="pagination.rowsPerPage"
-                      :options="[10,20,30,50,100]"
+                      :options="[10,25,50,100,150,200,250,300,350,400,450,500]"
                       dense
                       options-dense
                       borderless

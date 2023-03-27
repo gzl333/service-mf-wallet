@@ -21,6 +21,9 @@ export default {
         app_service_id?: string
         status?: 'wait' | 'available' | 'cancelled' | 'deleted'
         template_id?: string
+        valid_status?: 'notyet' | 'valid' | 'expired'
+        issuer?: string
+        redeemer?: string
         download?: string
       }
     }) {
