@@ -108,15 +108,25 @@ const statusOptions = computed(() => [
   {
     value: 'all',
     label: '全部有效期',
-    labelEn: 'All Status'
+    labelEn: 'All Validity Status'
   },
   {
-    value: true,
+    value: 'valid',
     label: '有效期内',
     labelEn: 'Valid'
+  },
+  {
+    value: 'notyet',
+    label: '待生效',
+    labelEn: 'Pending'
+  },
+  {
+    value: 'expired',
+    label: '已过期',
+    labelEn: 'Expired'
   }
 ])
-const statusSelection = ref<'all' | boolean>('all')
+const statusSelection = ref<'all' | 'valid' | 'notyet' | 'expired'>('all')
 
 // table loading status
 const isLoading = ref(false)
@@ -422,7 +432,7 @@ const delVoucher = async (voucher: VoucherInterface) => {
                     outlined
                     dense
                     stack-label
-                    :label="tc('筛选代金券状态')"
+                    :label="tc('筛选有效期')"
                     v-model="statusSelection"
                     :options="statusOptions"
                     emit-value
@@ -444,7 +454,7 @@ const delVoucher = async (voucher: VoucherInterface) => {
                     outlined
                     dense
                     stack-label
-                    :label="tc('筛选代金券种类')"
+                    :label="tc('筛选服务种类')"
                     v-model="typeSelection"
                     :options="typeOptions"
                     emit-value
@@ -741,14 +751,14 @@ const delVoucher = async (voucher: VoucherInterface) => {
                 readonly
                 :model-value="Number(props.row.balance) / Number(props.row.face_value) * 100"
                 show-value
-                size="90px"
+                size="70px"
                 :thickness="0.22"
                 :color="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'green' : 'grey-5'"
                 track-color="grey-3"
               >
                 <div class="text-caption"
                      :class="((new Date() - new Date(props.row.expiration_time)) < 0 ) && ((new Date() - new Date(props.row.effective_time)) > 0) ? 'text-green' : ''">
-                  {{ (Number(props.row.balance) / Number(props.row.face_value) * 100).toFixed(2) }}%
+                  {{ (Number(props.row.balance) / Number(props.row.face_value) * 100).toFixed(0) }}%
                 </div>
               </q-knob>
 
