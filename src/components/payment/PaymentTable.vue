@@ -165,7 +165,7 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
           ...(props.isGroup && { vo_id: groupSelection.value }),
           ...(typeSelection.value !== 'all' && { trade_type: typeSelection.value }),
           ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
-          ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
+          ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value + 'T23:59:59', 'YYYY-MM-DDTHH:mm:ss'), 'YYYY-MM-DDTHH:mm:ssZ') }),
           ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id })
         }
       })
@@ -202,7 +202,7 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
             ...(props.isGroup && { vo_id: groupSelection.value }),
             ...(typeSelection.value !== 'all' && { status: typeSelection.value }),
             ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
-            ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
+            ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value + 'T23:59:59', 'YYYY-MM-DDTHH:mm:ss'), 'YYYY-MM-DDTHH:mm:ssZ') }),
             ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id })
           }
         })
@@ -241,7 +241,7 @@ const loadRows = async (direction: 'first' | 'prev' | 'next') => {
             ...(props.isGroup && { vo_id: groupSelection.value }),
             ...(typeSelection.value !== 'all' && { status: typeSelection.value }),
             ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
-            ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
+            ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value + 'T23:59:59', 'YYYY-MM-DDTHH:mm:ss'), 'YYYY-MM-DDTHH:mm:ssZ') }),
             ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id }) // id -> pay_app_service_id
           }
         })
