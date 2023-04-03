@@ -10,7 +10,7 @@ import { exportFile, useQuasar } from 'quasar'
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 import useCopyToClipboard from 'src/hooks/useCopyToClipboard'
 
-import type { VoucherInterface } from 'stores/store'
+import type { VoucherInterface, UserInterface } from 'stores/store'
 
 // const props = defineProps({
 //   refresh: {
@@ -109,17 +109,40 @@ const issuerOptions = computed(() => [
     value: 'all',
     label: `${tc('全部发放者')}`
   },
-  // {
-  //   value: 'username',
-  //   label: `${tc('用户名关键字')}`
-  // },
+  {
+    value: 'username',
+    label: `${tc('用户名关键字')}`
+  },
   {
     value: 'user-id',
     label: `${tc('用户ID')}`
   }
 ])
 const issuerSelection = ref('all')
+// 直接输入user_id
 const issuerInput = ref('')
+// 输入username关键字
+const issuerUsernameModel = ref<UserInterface>()
+const issuerUsernameOptions = ref<UserInterface[]>()
+// q-select的筛选函数
+const filterIssuer = async (val: string, update: (arg0: () => Promise<void>, arg1: (ref: any) => void) => void, abort: () => void) => {
+  if (val.length < 2) {
+    abort()
+    return
+  }
+  update(async () => {
+    const respUsers = await api.wallet.user.getUser({ query: { search: val } })
+    issuerUsernameOptions.value = respUsers.data.results
+  },
+  // "ref" is the Vue reference to the QSelect
+  ref => {
+    if (val !== '' && ref.options.length > 0 && ref.getOptionIndex() === -1) {
+      ref.moveOptionSelection(1, true) // focus the first selectable option and do not update the input-value
+      ref.toggleOption(ref.options[ref.optionIndex], true) // toggle the focused option
+    }
+  }
+  )
+}
 
 // 筛选redeemer
 const redeemerOptions = computed(() => [
@@ -127,17 +150,40 @@ const redeemerOptions = computed(() => [
     value: 'all',
     label: `${tc('全部兑换者')}`
   },
-  // {
-  //   value: 'username',
-  //   label: `${tc('用户名关键字')}`
-  // },
+  {
+    value: 'username',
+    label: `${tc('用户名关键字')}`
+  },
   {
     value: 'user-id',
     label: `${tc('用户ID')}`
   }
 ])
 const redeemerSelection = ref('all')
+// 直接输入user_id
 const redeemerInput = ref('')
+// 输入username关键字
+const redeemerUsernameModel = ref<UserInterface>()
+const redeemerUsernameOptions = ref<UserInterface[]>()
+// q-select的筛选函数
+const filterRedeemer = async (val: string, update: (arg0: () => Promise<void>, arg1: (ref: any) => void) => void, abort: () => void) => {
+  if (val.length < 2) {
+    abort()
+    return
+  }
+  update(async () => {
+    const respUsers = await api.wallet.user.getUser({ query: { search: val } })
+    redeemerUsernameOptions.value = respUsers.data.results
+  },
+  // "ref" is the Vue reference to the QSelect
+  ref => {
+    if (val !== '' && ref.options.length > 0 && ref.getOptionIndex() === -1) {
+      ref.moveOptionSelection(1, true) // focus the first selectable option and do not update the input-value
+      ref.toggleOption(ref.options[ref.optionIndex], true) // toggle the focused option
+    }
+  }
+  )
+}
 
 // 根据当前搜索条件，更新rows，并更新count值
 const loadRows = async () => {
@@ -152,8 +198,10 @@ const loadRows = async () => {
         ...(serviceSelection.value !== 'all' && { app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id }), // id -> pay_app_service_id
         ...(statusSelection.value !== 'all' && { status: statusSelection.value }),
         ...(validSelection.value !== 'all' && { valid_status: validSelection.value }),
-        ...(issuerSelection.value !== 'all' && { issuer: issuerInput.value }),
-        ...(redeemerSelection.value !== 'all' && { redeemer: redeemerInput.value })
+        ...(issuerSelection.value === 'user-id' && { issuer: issuerInput.value }),
+        ...(issuerSelection.value === 'username' && { issuer: issuerUsernameModel.value?.username }),
+        ...(redeemerSelection.value === 'user-id' && { redeemer: redeemerInput.value }),
+        ...(redeemerSelection.value === 'username' && { redeemer: redeemerUsernameModel.value?.username })
       }
     })
     // 拿到rows值，给table用
@@ -183,6 +231,9 @@ const resetPageSelection = () => {
 const resetFilters = () => {
   serviceSelection.value = 'all'
   statusSelection.value = 'all'
+  validSelection.value = 'all'
+  issuerSelection.value = 'all'
+  redeemerSelection.value = 'all'
 }
 
 // onMounted时加载初始table第一页
@@ -535,9 +586,36 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
                 <!--            </template>-->
               </q-select>
 
+              <q-select
+                style="width: 300px;"
+                v-if="issuerSelection === 'username'"
+                v-model="issuerUsernameModel"
+                :label-color="issuerUsernameModel ? 'primary' : ''"
+                :label="tc('用户名关键字')"
+                outlined
+                dense
+                use-input
+                fill-input
+                hide-selected
+                clearable
+                input-debounce="0"
+                option-value="id"
+                option-label="username"
+                :options="issuerUsernameOptions"
+                @filter="filterIssuer"
+              >
+                <template v-slot:no-option>
+                  <q-item>
+                    <q-item-section class="text-grey">
+                      {{ tc('暂无筛选结果') }}
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
+
               <q-input
                 style="width: 250px;"
-                v-if="issuerSelection !== 'all'"
+                v-if="issuerSelection === 'user-id'"
                 :label-color="issuerInput ? 'primary' : ''"
                 v-model.trim="issuerInput"
                 outlined
@@ -549,6 +627,7 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
                   <q-icon name="close" @click="issuerInput = ''" class="cursor-pointer"/>
                 </template>
               </q-input>
+
             </div>
             <div class="col-auto row items-center no-wrap">
               <q-select class="col-auto"
@@ -573,9 +652,36 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
                 <!--            </template>-->
               </q-select>
 
+              <q-select
+                style="width: 300px;"
+                v-if="redeemerSelection === 'username'"
+                v-model="redeemerUsernameModel"
+                :label-color="redeemerUsernameModel ? 'primary' : ''"
+                :label="tc('用户名关键字')"
+                outlined
+                dense
+                use-input
+                fill-input
+                hide-selected
+                clearable
+                input-debounce="0"
+                option-value="id"
+                option-label="username"
+                :options="redeemerUsernameOptions"
+                @filter="filterRedeemer"
+              >
+                <template v-slot:no-option>
+                  <q-item>
+                    <q-item-section class="text-grey">
+                      {{ tc('暂无筛选结果') }}
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
+
               <q-input
                 style="width: 250px;"
-                v-if="redeemerSelection !== 'all'"
+                v-if="redeemerSelection === 'user-id'"
                 :label-color="redeemerInput ? 'primary' : ''"
                 v-model.trim="redeemerInput"
                 outlined

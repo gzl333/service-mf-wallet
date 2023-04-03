@@ -15,6 +15,15 @@ import DeleteVoucherDialog from 'components/voucher/DeleteVoucherDialog.vue'
 // const { tc } = i18n.global
 const exceptionNotifier = useExceptionNotifier()
 
+export interface UserInterface {
+  id: string
+  username: string
+  fullname: string
+  role: {
+    role: string[]
+  }
+}
+
 export interface AppServiceInterface {
   id: string
   name: string

@@ -263,6 +263,21 @@ export default {
     }
   },
   user: {
+    getUser (
+      payload?: {
+        query?: {
+          page?: number
+          page_size?: number
+          search?: string
+          federal_admin?: boolean
+        }
+      }
+    ) {
+      const config = {
+        params: payload?.query
+      }
+      return axiosWallet.get('/user', config)
+    },
     getUserPermissionPolicy (payload?: {
       query?: {
         page?: number;
