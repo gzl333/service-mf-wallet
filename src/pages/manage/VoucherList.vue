@@ -289,24 +289,36 @@ const exportTable = () => {
   // encoding to csv format
   const content =
     [i18n.global.locale === 'zh'
-      ? ['代金券ID', '服务单元', '资源种类', '创建时间', '失效时间', '原始面额', '当前余额', '兑换状态', '兑换码']
-      : ['Voucher ID', 'Service Node', 'Resource Type', 'Creation Time', 'Expiration Time', 'Denomination', 'Balance', 'Status', 'Exchange Code']
-    ] // title
+      ? ['代金券ID', '服务单元', '资源种类', '发放者', '创建时间', '失效时间', '兑换状态', '兑换者', '兑换时间', '原始面额', '当前余额', '兑换码']
+      : ['Voucher ID', 'Service Node', 'Resource Type', 'Issuer', 'Creation Time', 'Expiration Time', 'Redeem Status', 'Redeemer', 'Redeem Time', 'Denomination', 'Balance', 'Exchange Code']
+    ] // title line
       .concat(
-        // rows
+        // contents of each line
         rowSelection.value.map(row => [
           row.id,
           (i18n.global.locale === 'zh' ? row.app_service?.name : row.app_service?.name_en) as string,
-          row.app_service?.category as string,
+          row.app_service?.category === 'vms-server' ? tc('云主机')
+            : row.app_service?.category === 'vms-object' ? tc('对象存储')
+              : row.app_service?.category === 'high-cloud' ? tc('高等级云')
+                : row.app_service?.category === 'hpc' ? tc('高性能计算')
+                  : row.app_service?.category === 'other' ? tc('其它')
+                    : tc('未知'),
+          row.issuer,
           new Date(row.creation_time).toLocaleString(),
           new Date(row.expiration_time).toLocaleString(),
+          row.status === 'wait' ? tc('待兑换')
+            : row.status === 'available' ? '已兑换'
+              : row.status === 'canceled' ? tc('已取消')
+                : row.status === 'deleted' ? tc('已删除')
+                  : tc('未知'),
+          row.user?.username as string,
+          new Date(row.granted_time).toLocaleString(),
           row.face_value,
           row.balance,
-          row.status,
           row.exchange_code
         ])
       )
-      .join('\r\n')
+      .join('\r\n') // end of the line
 
   // console.log(content)
 
@@ -338,6 +350,7 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
   onOk((isSuccess: boolean) => {
     // 如果删除成功，就重新搜索，获取最新列表
     if (isSuccess) {
+      // 可优化部分：如果删除的是当页最后一个，应刷新前页
       loadRows()
     }
   })

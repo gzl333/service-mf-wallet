@@ -120,7 +120,7 @@ export interface VoucherInterface {
     id: string
     name: string
     name_en: string
-    category: string // more specified?
+    category: 'vms-server' | 'vms-object' | 'high-cloud' | 'hpc' | 'other'
     service_id: string | null
   },
   user?: {
