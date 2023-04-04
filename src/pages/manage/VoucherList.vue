@@ -5,7 +5,7 @@ import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
 import api from 'src/api'
-import { exportFile, QSelect, useQuasar } from 'quasar'
+import { date, exportFile, QSelect, useQuasar } from 'quasar'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 import useCopyToClipboard from 'src/hooks/useCopyToClipboard'
@@ -102,6 +102,11 @@ const validOptions = computed(() => [
   }
 ])
 const validSelection = ref<'all' | 'notyet' | 'valid' | 'expired'>('all')
+
+// 筛选日期
+// const startTime = ref(date.formatDate(date.startOfDate(Date.now(), 'year'), 'YYYY-MM-DD'))
+const startTime = ref('2021-01-01')
+const endTime = ref(date.formatDate(Date.now(), 'YYYY-MM-DD'))
 
 // 筛选issuer
 const issuerOptions = computed(() => [
@@ -205,7 +210,9 @@ const loadRows = async () => {
         ...(issuerSelection.value === 'user-id' && { issuer: issuerInput.value }),
         ...(issuerSelection.value === 'username' && { issuer: issuerUsernameModel.value?.username }),
         ...(redeemerSelection.value === 'user-id' && { redeemer: redeemerInput.value }),
-        ...(redeemerSelection.value === 'username' && { redeemer: redeemerUsernameModel.value?.username })
+        ...(redeemerSelection.value === 'username' && { redeemer: redeemerUsernameModel.value?.username }),
+        ...(startTime.value !== '' && { time_start: date.formatDate(date.extractDate(startTime.value, 'YYYY-MM-DD'), 'YYYY-MM-DDTHH:mm:ssZ') }),
+        ...(endTime.value !== '' && { time_end: date.formatDate(date.extractDate(endTime.value + 'T23:59:59', 'YYYY-MM-DDTHH:mm:ss'), 'YYYY-MM-DDTHH:mm:ssZ') })
       }
     })
     // 拿到rows值，给table用
@@ -245,14 +252,14 @@ onMounted(loadRows)
 
 // 分栏定义
 const columns = computed(() => [
-  {
-    name: 'status',
-    label: (() => tc('状态'))(),
-    align: 'center',
-    classes: 'ellipsis',
-    style: 'padding: 15px 0px',
-    headerStyle: 'padding: 0 2px'
-  },
+  // {
+  //   name: 'status',
+  //   label: (() => tc('状态'))(),
+  //   align: 'center',
+  //   classes: 'ellipsis',
+  //   style: 'padding: 15px 0px',
+  //   headerStyle: 'padding: 0 2px'
+  // },
   {
     name: 'id',
     label: (() => tc('代金券ID'))(),
@@ -564,6 +571,20 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
               <!--                </span>-->
               <!--          </template>-->
             </q-select>
+
+            <q-input style="width: 170px;"
+                     v-model="startTime"
+                     type="date"
+                     :label="tc('创建时间起')"
+                     outlined
+                     dense/>
+
+            <q-input style="width: 170px;"
+                     v-model="endTime"
+                     type="date"
+                     :label="tc('创建时间止')"
+                     outlined
+                     dense/>
           </div>
 
           <div class="row q-gutter-md">
@@ -778,47 +799,47 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
             <q-checkbox v-model="props.selected" dense size="xs"/>
           </q-td>
 
-          <q-td key="status" :props="props">
-            <q-chip v-if="props.row.status === 'wait'"
-                    style="width: 80px;"
-                    color="primary"
-                    text-color="white"
-                    icon="more_horiz">
-              <div class="row justify-center">
-                {{ tc('待兑换') }}
-              </div>
-            </q-chip>
+<!--          <q-td key="status" :props="props">-->
+<!--            <q-chip v-if="props.row.status === 'wait'"-->
+<!--                    style="width: 80px;"-->
+<!--                    color="primary"-->
+<!--                    text-color="white"-->
+<!--                    icon="more_horiz">-->
+<!--              <div class="row justify-center">-->
+<!--                {{ tc('待兑换') }}-->
+<!--              </div>-->
+<!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'available'"
-                    style="width: 80px;"
-                    color="green"
-                    text-color="white"
-                    icon="done">
-              <div class="row justify-center">
-                {{ tc('已兑换') }}
-              </div>
-            </q-chip>
+<!--            <q-chip v-if="props.row.status === 'available'"-->
+<!--                    style="width: 80px;"-->
+<!--                    color="green"-->
+<!--                    text-color="white"-->
+<!--                    icon="done">-->
+<!--              <div class="row justify-center">-->
+<!--                {{ tc('已兑换') }}-->
+<!--              </div>-->
+<!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'cancelled'"
-                    style="width: 80px;"
-                    color="red"
-                    text-color="white"
-                    icon="close">
-              <div class="row justify-center">
-                {{ tc('已取消') }}
-              </div>
-            </q-chip>
+<!--            <q-chip v-if="props.row.status === 'cancelled'"-->
+<!--                    style="width: 80px;"-->
+<!--                    color="red"-->
+<!--                    text-color="white"-->
+<!--                    icon="close">-->
+<!--              <div class="row justify-center">-->
+<!--                {{ tc('已取消') }}-->
+<!--              </div>-->
+<!--            </q-chip>-->
 
-            <q-chip v-if="props.row.status === 'deleted'"
-                    style="width: 80px;"
-                    color="grey"
-                    text-color="white"
-                    icon="delete_forever">
-              <div class="row justify-center">
-                {{ tc('已删除') }}
-              </div>
-            </q-chip>
-          </q-td>
+<!--            <q-chip v-if="props.row.status === 'deleted'"-->
+<!--                    style="width: 80px;"-->
+<!--                    color="grey"-->
+<!--                    text-color="white"-->
+<!--                    icon="delete_forever">-->
+<!--              <div class="row justify-center">-->
+<!--                {{ tc('已删除') }}-->
+<!--              </div>-->
+<!--            </q-chip>-->
+<!--          </q-td>-->
 
           <q-td key="id" :props="props">
             {{ props.row.id }}
@@ -991,7 +1012,7 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
 
               <q-chip v-if="props.row.status === 'cancelled'"
                       style="width: 80px;"
-                      color="red"
+                      color="negative"
                       text-color="white"
                       icon="close">
                 <div class="row justify-center">

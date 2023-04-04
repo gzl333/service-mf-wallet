@@ -24,6 +24,8 @@ export default {
         valid_status?: 'notyet' | 'valid' | 'expired'
         issuer?: string
         redeemer?: string
+        time_start?: string
+        time_end?: string
         download?: string
       }
     }) {
