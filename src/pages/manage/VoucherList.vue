@@ -5,7 +5,7 @@ import { useStore } from 'stores/store'
 // import { useRoute, useRouter } from 'vue-router'
 import { i18n } from 'boot/i18n'
 import api from 'src/api'
-import { exportFile, useQuasar } from 'quasar'
+import { exportFile, QSelect, useQuasar } from 'quasar'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
 import useCopyToClipboard from 'src/hooks/useCopyToClipboard'
@@ -125,20 +125,22 @@ const issuerInput = ref('')
 const issuerUsernameModel = ref<UserInterface>()
 const issuerUsernameOptions = ref<UserInterface[]>()
 // q-select的筛选函数
-const filterIssuer = async (val: string, update: (arg0: () => Promise<void>, arg1: (ref: any) => void) => void, abort: () => void) => {
-  if (val.length < 2) {
+const filterIssuer = async (val: string, update: (arg0: () => Promise<void>, arg1: (ref: QSelect) => void) => void, abort: () => void) => {
+  // 从第几位输入开始获取列表
+  if (val.length < 1) {
     abort()
     return
   }
+  // update是在select的输入有变化时的回调注册函数
   update(async () => {
     const respUsers = await api.wallet.user.getUser({ query: { search: val } })
     issuerUsernameOptions.value = respUsers.data.results
   },
   // "ref" is the Vue reference to the QSelect
   ref => {
-    if (val !== '' && ref.options.length > 0 && ref.getOptionIndex() === -1) {
+    if (val !== '' && ref.options!.length > 0 && ref.getOptionIndex() === -1) {
       ref.moveOptionSelection(1, true) // focus the first selectable option and do not update the input-value
-      ref.toggleOption(ref.options[ref.optionIndex], true) // toggle the focused option
+      ref.toggleOption(ref.options![ref.getOptionIndex()], true) // toggle the focused option
     }
   }
   )
@@ -166,20 +168,22 @@ const redeemerInput = ref('')
 const redeemerUsernameModel = ref<UserInterface>()
 const redeemerUsernameOptions = ref<UserInterface[]>()
 // q-select的筛选函数
-const filterRedeemer = async (val: string, update: (arg0: () => Promise<void>, arg1: (ref: any) => void) => void, abort: () => void) => {
-  if (val.length < 2) {
+const filterRedeemer = async (val: string, update: (arg0: () => Promise<void>, arg1: (ref: QSelect) => void) => void, abort: () => void) => {
+  // 从第几位输入开始获取列表
+  if (val.length < 1) {
     abort()
     return
   }
+  // update是在select的输入有变化时的回调注册函数
   update(async () => {
     const respUsers = await api.wallet.user.getUser({ query: { search: val } })
     redeemerUsernameOptions.value = respUsers.data.results
   },
   // "ref" is the Vue reference to the QSelect
   ref => {
-    if (val !== '' && ref.options.length > 0 && ref.getOptionIndex() === -1) {
+    if (val !== '' && ref.options!.length > 0 && ref.getOptionIndex() === -1) {
       ref.moveOptionSelection(1, true) // focus the first selectable option and do not update the input-value
-      ref.toggleOption(ref.options[ref.optionIndex], true) // toggle the focused option
+      ref.toggleOption(ref.options![ref.getOptionIndex()], true) // toggle the focused option
     }
   }
   )
@@ -241,14 +245,14 @@ onMounted(loadRows)
 
 // 分栏定义
 const columns = computed(() => [
-  // {
-  //   name: 'status',
-  //   label: (() => tc('兑换状态'))(),
-  //   align: 'center',
-  //   classes: 'ellipsis',
-  //   style: 'padding: 15px 0px',
-  //   headerStyle: 'padding: 0 2px'
-  // },
+  {
+    name: 'status',
+    label: (() => tc('状态'))(),
+    align: 'center',
+    classes: 'ellipsis',
+    style: 'padding: 15px 0px',
+    headerStyle: 'padding: 0 2px'
+  },
   {
     name: 'id',
     label: (() => tc('代金券ID'))(),
@@ -774,47 +778,47 @@ const delVoucherAdmin = async (voucher: VoucherInterface) => {
             <q-checkbox v-model="props.selected" dense size="xs"/>
           </q-td>
 
-          <!--          <q-td key="status" :props="props">-->
-          <!--            <q-chip v-if="props.row.status === 'wait'"-->
-          <!--                    style="width: 80px;"-->
-          <!--                    color="primary"-->
-          <!--                    text-color="white"-->
-          <!--                    icon="more_horiz">-->
-          <!--              <div class="row justify-center">-->
-          <!--                {{ tc('待兑换') }}-->
-          <!--              </div>-->
-          <!--            </q-chip>-->
+          <q-td key="status" :props="props">
+            <q-chip v-if="props.row.status === 'wait'"
+                    style="width: 80px;"
+                    color="primary"
+                    text-color="white"
+                    icon="more_horiz">
+              <div class="row justify-center">
+                {{ tc('待兑换') }}
+              </div>
+            </q-chip>
 
-          <!--            <q-chip v-if="props.row.status === 'available'"-->
-          <!--                    style="width: 80px;"-->
-          <!--                    color="green"-->
-          <!--                    text-color="white"-->
-          <!--                    icon="done">-->
-          <!--              <div class="row justify-center">-->
-          <!--                {{ tc('已兑换') }}-->
-          <!--              </div>-->
-          <!--            </q-chip>-->
+            <q-chip v-if="props.row.status === 'available'"
+                    style="width: 80px;"
+                    color="green"
+                    text-color="white"
+                    icon="done">
+              <div class="row justify-center">
+                {{ tc('已兑换') }}
+              </div>
+            </q-chip>
 
-          <!--            <q-chip v-if="props.row.status === 'cancelled'"-->
-          <!--                    style="width: 80px;"-->
-          <!--                    color="red"-->
-          <!--                    text-color="white"-->
-          <!--                    icon="close">-->
-          <!--              <div class="row justify-center">-->
-          <!--                {{ tc('已取消') }}-->
-          <!--              </div>-->
-          <!--            </q-chip>-->
+            <q-chip v-if="props.row.status === 'cancelled'"
+                    style="width: 80px;"
+                    color="red"
+                    text-color="white"
+                    icon="close">
+              <div class="row justify-center">
+                {{ tc('已取消') }}
+              </div>
+            </q-chip>
 
-          <!--            <q-chip v-if="props.row.status === 'deleted'"-->
-          <!--                    style="width: 80px;"-->
-          <!--                    color="grey"-->
-          <!--                    text-color="white"-->
-          <!--                    icon="delete_forever">-->
-          <!--              <div class="row justify-center">-->
-          <!--                {{ tc('已删除') }}-->
-          <!--              </div>-->
-          <!--            </q-chip>-->
-          <!--          </q-td>-->
+            <q-chip v-if="props.row.status === 'deleted'"
+                    style="width: 80px;"
+                    color="grey"
+                    text-color="white"
+                    icon="delete_forever">
+              <div class="row justify-center">
+                {{ tc('已删除') }}
+              </div>
+            </q-chip>
+          </q-td>
 
           <q-td key="id" :props="props">
             {{ props.row.id }}
