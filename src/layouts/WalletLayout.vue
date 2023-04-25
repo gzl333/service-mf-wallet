@@ -84,7 +84,7 @@ const releaseTime = process.env.releaseTime
             </q-item>
 
             <q-item
-              v-if="store.items.fedRole === 'federal-admin'"
+              v-if="store.items.fedRole === 'federal-admin' || store.tables.appServiceAdminTable.allIds.length > 0"
               clickable
               :active="activeItem === 'manage'"
               @click="navigateToUrl('/my/wallet/manage')"
@@ -109,7 +109,7 @@ const releaseTime = process.env.releaseTime
 
                 <div class="text-grey text-caption text-center">{{ tc('releaseTime') }}</div>
                 <div class="text-grey text-caption text-center">
-                  {{ new Date(releaseTime).toLocaleString(i18n.global.locale) }}
+                  {{ new Date(releaseTime).toLocaleString(i18n.global.locale as string) }}
                 </div>
 
               </q-tooltip>
