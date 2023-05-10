@@ -10,6 +10,7 @@ import moment from 'moment'
 import api from 'src/api'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
+import { AxiosError } from 'axios'
 
 // const props = defineProps({
 //   foo: {
@@ -67,6 +68,7 @@ const amountInput = ref<QInput>()
 const denomination = ref(1000)
 const amount = ref(1)
 const username = ref('')
+const method = ref<'redeem' | 'assign'>('redeem')
 
 // 生效时间
 const dateStartSelect = ref(moment().format('YYYY-MM-DD'))
@@ -139,41 +141,75 @@ const onOKClick = async () => {
   })
 
   // 创建代金券
-  try {
+
+  if (method.value === 'redeem') {
+    // 发放多个代金券，用户自行领取
+    try {
+      // req： 同时发出多个网络请求，并等待所有成功结果
+      void await Promise.all([...Array(Number(amount.value))].map(() => api.wallet.admin.postAdminCashCoupon({
+        body: {
+          face_value: denomination.value.toString(),
+          effective_time: startDateTimeStr.value,
+          expiration_time: endDateTimeStr.value,
+          app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id
+        }
+      })))
+
+      // notify
+      dismiss()
+      Notify.create({
+        classes: 'notification-positive shadow-15',
+        icon: 'mdi-check-circle',
+        // spinner: true,
+        textColor: 'positive',
+        message: `${tc('成功创建代金券')}:${amount.value}${tc('张')}`,
+        position: 'bottom',
+        closeBtn: true,
+        timeout: 5000, // infinite
+        multiLine: false
+      })
+
+      // close
+      onDialogHide()
+      // jump： stamp是时间戳，唯一作用是防止进入相同路径而不刷新
+      navigateToUrl('/my/wallet/manage/voucher?stamp=' + new Date().getTime())
+    } catch (exception) {
+      // notify
+      dismiss()
+      exceptionNotifier(exception, 'CreateVoucherDialog')
+      console.log(exception)
+    }
+  } else {
+    // 发放多个代金券，直接发放到指定账户列表
+    // parse accounts
+    const accounts = username.value.split(',')
+      .map((account: string) => account.trim())
+      .filter((account: string) => account !== '')
+
+    console.log('Accounts:', accounts)
+
     // req： 同时发出多个网络请求，并等待所有成功结果
-    void await Promise.all([...Array(Number(amount.value))].map(() => api.wallet.admin.postAdminCashCoupon({
-      body: {
-        face_value: denomination.value.toString(),
-        effective_time: startDateTimeStr.value,
-        expiration_time: endDateTimeStr.value,
-        app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id,
-        ...(username.value !== '' ? { username: username.value } : {})
+    accounts.filter(async (account: string) => {
+      try {
+        const respCreateVoucher = await api.wallet.admin.postAdminCashCoupon({
+          body: {
+            face_value: denomination.value.toString(),
+            effective_time: startDateTimeStr.value,
+            expiration_time: endDateTimeStr.value,
+            app_service_id: store.tables.appServiceTable.byId[serviceSelection.value]?.id,
+            username: account
+          }
+        })
+        console.log(respCreateVoucher.data)
+        // 成功的account从数组里去掉，只留下失败的
+        return false
+      } catch (exception) {
+        if (exception instanceof AxiosError) {
+          console.log(exception.config.data.username) // todo can't get it!!!!
+        }
       }
-    })))
-
-    // notify
-    dismiss()
-    Notify.create({
-      classes: 'notification-positive shadow-15',
-      icon: 'mdi-check-circle',
-      // spinner: true,
-      textColor: 'positive',
-      message: `${tc('成功创建代金券')}:${amount.value}${tc('张')}`,
-      position: 'bottom',
-      closeBtn: true,
-      timeout: 5000, // infinite
-      multiLine: false
-    })
-
-    // close
-    onDialogHide()
-    // jump： stamp是时间戳，唯一作用是防止进入相同路径而不刷新
-    navigateToUrl('/my/wallet/manage/voucher?stamp=' + new Date().getTime())
-  } catch (exception) {
-    // notify
-    dismiss()
-    exceptionNotifier(exception, 'CreateVoucherDialog')
-    console.log(exception)
+    }
+    )
   }
 }
 
@@ -290,7 +326,7 @@ const onOKClick = async () => {
 
           <q-input
             ref="denominationInput"
-            class="col q-mt-md"
+            class="col-4 q-mt-md"
             style="min-width: 200px"
             v-model.number.trim="denomination"
             type="number"
@@ -342,13 +378,45 @@ const onOKClick = async () => {
           </div>
         </div>
 
-        <div class="row items-center">
+        <div class="row items-center q-pt-lg q-pb-xs">
+          <div class="col-3 text-grey-7">
+            {{ tc('发放方式') }}
+          </div>
+          <div class="col-9 row items-center ">
+
+            <q-btn
+              class=""
+              :color="method === 'redeem' ? 'primary' : 'grey-3'"
+              :text-color="method === 'redeem' ? '' : 'black'"
+              unelevated
+              dense
+              @click="method = 'redeem'"
+            >
+              {{ tc('用户自行兑换') }}
+            </q-btn>
+
+            <q-btn
+              class="q-mx-md"
+              :color="method === 'assign' ? 'primary' : 'grey-3'"
+              :text-color="method === 'assign' ? '' : 'black'"
+              unelevated
+              dense
+              @click="method = 'assign'"
+            >
+              {{ tc('发到指定账户') }}
+            </q-btn>
+
+          </div>
+        </div>
+
+        <div v-if="method === 'redeem'"
+             class="row items-center">
           <div class="col-3 text-grey-7">
             {{ tc('数量') }}
           </div>
           <q-input
             ref="amountInput"
-            class="col q-mt-md"
+            class="col-4 q-mt-md"
             style="min-width: 200px"
             v-model.number.trim="amount"
             type="number"
@@ -363,15 +431,17 @@ const onOKClick = async () => {
           <div class="col-auto"> {{ tc('张') }}</div>
         </div>
 
-        <div class="row items-center">
+        <div v-if="method === 'assign'"
+             class="row items-center">
           <div class="col-3 text-grey-7">
-            {{ tc('指定用户名(可选)') }}
+            {{ tc('指定账户') }}
           </div>
           <q-input
-            class="col"
-            style="min-width: 200px"
+            class="col q-pt-md"
+            style="min-width: 200px;"
+            type="textarea"
             v-model.trim="username"
-            :label="tc('将代金券发放给具体用户，可以不填写')"
+            :label="tc('将代金券发放给具体账户，请用英文逗号分隔多个账户')"
             dense
             outlined
           />
