@@ -10,7 +10,7 @@ import moment from 'moment'
 import api from 'src/api'
 
 import useExceptionNotifier from 'src/hooks/useExceptionNotifier'
-import { AxiosError } from 'axios'
+// import { AxiosError } from 'axios'
 
 // const props = defineProps({
 //   foo: {
@@ -29,9 +29,9 @@ const store = useStore()
 
 const {
   dialogRef,
-  onDialogHide,
+  onDialogHide
   // onDialogOK,
-  onDialogCancel
+  // onDialogCancel
 } = useDialogPluginComponent()
 
 const exceptionNotifier = useExceptionNotifier()
@@ -63,11 +63,13 @@ const MAX_AMOUNT = 10000 // 单次创建最大数量
 // dom refs
 const denominationInput = ref<QInput>()
 const amountInput = ref<QInput>()
+const usernameInput = ref<QInput>()
 
 // refs
 const denomination = ref(1000)
 const amount = ref(1)
 const username = ref('')
+const isUsernameAlert = ref(false)
 const method = ref<'redeem' | 'assign'>('redeem')
 
 // 生效时间
@@ -80,7 +82,18 @@ const dateEndSelect = ref(moment().add(1, 'month').format('YYYY-MM-DD'))
 const timeEndSelect = ref(moment().format('HH:mm'))
 const endDateTimeStr = computed(() => moment(dateEndSelect.value + ',' + timeEndSelect.value, 'YYYY-MM-DD,HH:mm').utc().format())
 
+// 按钮action
+const onHide = () => {
+  // close
+  onDialogHide()
+  // jump： stamp是时间戳，唯一作用是防止进入相同路径而不刷新
+  navigateToUrl('/my/wallet/manage/voucher?stamp=' + new Date().getTime())
+}
+
 const onOKClick = async () => {
+  // 关闭isAlert状态
+  isUsernameAlert.value = false
+
   // 校验输入
   // 面额
   if (denomination.value <= 0 || denomination.value > MAX_DENOMINATION) {
@@ -177,21 +190,44 @@ const onOKClick = async () => {
       // notify
       dismiss()
       exceptionNotifier(exception, 'CreateVoucherDialog')
-      console.log(exception)
+      // console.log(exception)
     }
   } else {
     // 发放多个代金券，直接发放到指定账户列表
+
     // parse accounts
-    const accounts = username.value.split(',')
-      .map((account: string) => account.trim())
-      .filter((account: string) => account !== '')
+    const accounts = [...new Set( // 去重
+      username.value.split(',') // 分割
+        .map((account: string) => account.trim()) // trim
+        .filter((account: string) => account !== '') // 去掉空串
+    )]
+    // console.log('Accounts:', accounts)
 
-    console.log('Accounts:', accounts)
+    // 输入为空则提示
+    if (accounts.length === 0) {
+      dismiss()
+      usernameInput.value?.focus()
+      Notify.create({
+        classes: 'notification-negative shadow-15',
+        icon: 'error',
+        textColor: 'negative',
+        message: `${tc('请输入账户')}`,
+        position: 'bottom',
+        closeBtn: true,
+        timeout: 5000,
+        multiLine: false
+      })
+      return
+    }
 
-    // req： 同时发出多个网络请求，并等待所有成功结果
-    accounts.filter(async (account: string) => {
+    // 分别记录成功和失败的账户
+    const success = []
+    const fail = []
+
+    // req： 每个account独立发出请求。
+    for (const account of accounts) {
       try {
-        const respCreateVoucher = await api.wallet.admin.postAdminCashCoupon({
+        await api.wallet.admin.postAdminCashCoupon({
           body: {
             face_value: denomination.value.toString(),
             effective_time: startDateTimeStr.value,
@@ -200,16 +236,59 @@ const onOKClick = async () => {
             username: account
           }
         })
-        console.log(respCreateVoucher.data)
-        // 成功的account从数组里去掉，只留下失败的
-        return false
+        // 记录成功的账户
+        success.push(account)
       } catch (exception) {
-        if (exception instanceof AxiosError) {
-          console.log(exception.config.data.username) // todo can't get it!!!!
-        }
+        // if (exception instanceof AxiosError) {
+        //   console.log(exception.config.data.username) // can't get it!!!!
+        // }
+        // 记录失败的账户
+        fail.push(account)
       }
     }
-    )
+
+    // 已经创建完毕，关闭提示
+    dismiss()
+
+    // fail为空则全部创建成功
+    if (fail.length === 0) {
+      Notify.create({
+        classes: 'notification-positive shadow-15',
+        icon: 'mdi-check-circle',
+        // spinner: true,
+        textColor: 'positive',
+        message: `${tc('成功为指定账户创建代金券')}}`,
+        position: 'bottom',
+        closeBtn: true,
+        timeout: 5000,
+        multiLine: false
+      })
+      // close
+      onDialogHide()
+      // jump： stamp是时间戳，唯一作用是防止进入相同路径而不刷新
+      navigateToUrl('/my/wallet/manage/voucher?stamp=' + new Date().getTime())
+    } else {
+      // console.log(fail)
+
+      // notify
+      Notify.create({
+        classes: 'notification-negative shadow-15',
+        icon: 'error',
+        textColor: 'negative',
+        message: `${tc('部分账户创建代金券失败，请检查输入')}`,
+        position: 'bottom',
+        closeBtn: true,
+        timeout: 0,
+        multiLine: false
+      })
+
+      // 显示在输入框内
+      username.value = fail.reduce((prev: string, curr: string) => prev + curr + ',', '')
+
+      // dom ref modification
+      usernameInput.value!.focus()
+      isUsernameAlert.value = true
+    }
   }
 }
 
@@ -217,7 +296,7 @@ const onOKClick = async () => {
 
 <template>
   <!-- notice dialogRef here -->
-  <q-dialog ref="dialogRef" @hide="onDialogHide" persistent>
+  <q-dialog ref="dialogRef" @hide="onHide" persistent>
     <q-card class="q-dialog-plugin dialog-primary ">
 
       <q-card-section class="row items-center justify-center q-pb-md">
@@ -392,11 +471,11 @@ const onOKClick = async () => {
               dense
               @click="method = 'redeem'"
             >
-              {{ tc('用户自行兑换') }}
+              {{ tc('用户兑换') }}
             </q-btn>
 
             <q-btn
-              class="q-mx-md"
+              class="q-mx-sm"
               :color="method === 'assign' ? 'primary' : 'grey-3'"
               :text-color="method === 'assign' ? '' : 'black'"
               unelevated
@@ -436,15 +515,25 @@ const onOKClick = async () => {
           <div class="col-3 text-grey-7">
             {{ tc('指定账户') }}
           </div>
-          <q-input
-            class="col q-pt-md"
-            style="min-width: 200px;"
-            type="textarea"
-            v-model.trim="username"
-            :label="tc('将代金券发放给具体账户，请用英文逗号分隔多个账户')"
-            dense
-            outlined
-          />
+          <div class="col q-pt-md">
+
+            <div class="text-grey">
+              {{ tc('将代金券发放给指定账户，请用英文逗号分隔多个账户') }}
+            </div>
+
+            <q-input
+              ref="usernameInput"
+              style="min-width: 200px;"
+              :color="isUsernameAlert ? 'negative' : 'primary'"
+              :label="isUsernameAlert ? tc('以下账户创建代金券失败:'):''"
+              type="textarea"
+              v-model.trim="username"
+              dense
+              outlined
+              @update:model-value="isUsernameAlert = false"
+            />
+          </div>
+
         </div>
 
       </q-card-section>
@@ -455,7 +544,7 @@ const onOKClick = async () => {
                outline
                no-caps
                :label="tc('取消')"
-               @click="onDialogCancel"/>
+               @click="onHide"/>
         <q-btn class="q-ma-sm"
                color="primary"
                unelevated
