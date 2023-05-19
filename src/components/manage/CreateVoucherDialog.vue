@@ -74,12 +74,14 @@ const method = ref<'redeem' | 'assign'>('redeem')
 
 // 生效时间
 const dateStartSelect = ref(moment().format('YYYY-MM-DD'))
-const timeStartSelect = ref(moment().format('HH:mm'))
+// const timeStartSelect = ref(moment().format('HH:mm'))
+const timeStartSelect = ref('00:00')
 const startDateTimeStr = computed(() => moment(dateStartSelect.value + ',' + timeStartSelect.value, 'YYYY-MM-DD,HH:mm').utc().format())
 
 // 失效时间
 const dateEndSelect = ref(moment().add(1, 'month').format('YYYY-MM-DD'))
-const timeEndSelect = ref(moment().format('HH:mm'))
+// const timeEndSelect = ref(moment().format('HH:mm'))
+const timeEndSelect = ref('00:00')
 const endDateTimeStr = computed(() => moment(dateEndSelect.value + ',' + timeEndSelect.value, 'YYYY-MM-DD,HH:mm').utc().format())
 
 // 按钮action
@@ -461,7 +463,7 @@ const onOKClick = async () => {
           <div class="col-3 text-grey-7">
             {{ tc('发放方式') }}
           </div>
-          <div class="col-9 row items-center ">
+          <div class="col-4 row items-center ">
 
             <q-btn
               class=""
